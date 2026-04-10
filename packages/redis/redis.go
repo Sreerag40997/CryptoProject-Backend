@@ -1,4 +1,4 @@
-package redis
+package redisClient
 
 import (
 	"context"
@@ -10,11 +10,12 @@ import (
 	"github.com/redis/go-redis/v9"
 )
 
-var Ctx = context.Background()
+var (
+	Ctx = context.Background()
+	Redis *redis.Client
+)
 
 func NewRedisClient(cfg *config.Config) (*redis.Client, error) {
-
-	var rdb *redis.Client
 
 	//  Check if production Redis URL exists (Upstash)
 	redisURL := os.Getenv("REDIS_URL")
@@ -27,14 +28,14 @@ func NewRedisClient(cfg *config.Config) (*redis.Client, error) {
 			return nil, err
 		}
 
-		rdb = redis.NewClient(opt)
+		Redis = redis.NewClient(opt)
 
 		log.Println("Using production Redis (Upstash / Render)")
 
 	} else {
 
 		// + Local Development Mode
-		rdb = redis.NewClient(&redis.Options{
+		Redis = redis.NewClient(&redis.Options{
 			Addr:         cfg.RedisAddr,
 			ReadTimeout:  5 * time.Second,
 			WriteTimeout: 5 * time.Second,
@@ -45,12 +46,12 @@ func NewRedisClient(cfg *config.Config) (*redis.Client, error) {
 	}
 
 	// Test connection
-	_, err := rdb.Ping(Ctx).Result()
+	_, err := Redis.Ping(Ctx).Result()
 	if err != nil {
 		return nil, err
 	}
 
 	log.Println("Connected to Redis ")
 
-	return rdb, nil
+	return Redis, nil
 }
