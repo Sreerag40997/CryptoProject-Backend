@@ -1,6 +1,7 @@
 package database
 
 import (
+	"cryptox/internal/modules/auth"
 	"cryptox/packages/config"
 	"log"
 	"time"
@@ -27,6 +28,13 @@ func NewPostgresConnection(cfg *config.Config)(*gorm.DB,error){
 	sqlDB.SetConnMaxLifetime(time.Hour)
 
 	log.Println("Connect to PostgreSQL")
+
+	err = db.AutoMigrate(
+		&auth.User{},
+	)
+	if err != nil {
+		log.Fatal(err)
+	}
 
 	return db,nil
 }

@@ -16,9 +16,11 @@ type Config struct {
 }
 
 func LeadConfig() *Config {
-	err := godotenv.Load()
+
+	err := godotenv.Load("../../.env")
 	if err != nil {
 		log.Println("No env file found")
+		log.Println("Error loading .env:", err)
 	}
 
 	dbURL := os.Getenv("DATABASE_URL")
@@ -36,6 +38,9 @@ func LeadConfig() *Config {
 		"DB_PORT",
 		"REDIS_ADDR",
 		"JWT_SECRET",
+		"BREVO_FROM_EMAIL",
+		"BREVO_FROM_NAME",
+		"BREVO_API_KEY",
 	}
 	for _, key := range required {
 		if os.Getenv(key) == "" {
