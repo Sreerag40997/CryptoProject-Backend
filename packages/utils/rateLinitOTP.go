@@ -20,7 +20,7 @@ func RateLimitOTP(email string) (bool, error) {
 	}
 	
 	if count == 1 {
-		redisClient.Redis.Expire(Ctx, key, 10*time.Minute)
+		redisClient.Redis.Expire(Ctx, key, 5*time.Minute)
 	}
 
 	if count > 3 {
