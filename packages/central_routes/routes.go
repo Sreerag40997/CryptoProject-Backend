@@ -9,11 +9,6 @@ import (
 	"gorm.io/gorm"
 )
 
-// app *fiber.App,
-// 	db *gorm.DB,
-// 	rdb *redis.Client,
-// 	jwtSecret string,
-
 func SetUp(app *fiber.App, db *gorm.DB, rdb *redis.Client, jwtSecret string) {
 
 	api := app.Group("/api")
