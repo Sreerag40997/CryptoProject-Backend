@@ -22,14 +22,17 @@ type BrevoEmail struct {
 	HTMLContent string `json:"htmlContent"`
 }
 
-func SentOTPEmail(TOemail, otp string) error {
+func SentToEmail(TOemail, Subject, htmlContent string) error {
 	url := "https://api.brevo.com/v3/smtp/email"
 
 	payload := BrevoEmail{}
 	payload.Sender.Email = os.Getenv("BREVO_FROM_EMAIL")
 	payload.Sender.Name = os.Getenv("BREVO_FROM_NAME")
-	payload.Subject = "Your CRYTINOX OTP"
-	payload.HTMLContent = "<h2>Your OTP</h2><b>" + otp + "</b><p>Valid for 5 min</p>"
+	payload.Subject = Subject
+	payload.HTMLContent = htmlContent
+
+//"Your CRYTINOX OTP"
+//"<h2>Your OTP</h2><b>" + otp + "</b><p>Valid for 5 min</p>"
 
 	payload.To = append(payload.To, struct {
 		Email string `json:"email"`
