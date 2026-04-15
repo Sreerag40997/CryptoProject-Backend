@@ -2,6 +2,9 @@ package database
 
 import (
 	"cryptox/internal/modules/auth"
+	cashwallet "cryptox/internal/modules/cah_wallet"
+	ecard "cryptox/internal/modules/e_card"
+	"cryptox/internal/modules/kyc"
 	"cryptox/packages/config"
 	"log"
 	"time"
@@ -31,6 +34,9 @@ func NewPostgresConnection(cfg *config.Config)(*gorm.DB,error){
 
 	err = db.AutoMigrate(
 		&auth.User{},
+		&kyc.KYC{},
+		&cashwallet.Wallet{},
+		&ecard.Card{},
 	)
 	if err != nil {
 		log.Fatal(err)
