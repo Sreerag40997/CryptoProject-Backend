@@ -2,7 +2,10 @@ package centralroutes
 
 import (
 	"cryptox/internal/modules/auth"
-	"cryptox/internal/modules/profile"
+	ecard "cryptox/internal/modules/e_card"
+	"cryptox/internal/modules/kyc"
+
+	// "cryptox/internal/modules/profile"
 
 	"github.com/gofiber/fiber/v2"
 	"github.com/redis/go-redis/v9"
@@ -14,6 +17,9 @@ func SetUp(app *fiber.App, db *gorm.DB, rdb *redis.Client, jwtSecret string) {
 	api := app.Group("/api")
 
 	auth.AuthRoutes(api, db, rdb, jwtSecret)
-	profile.ProfileRoutes(api, db, jwtSecret)
+	// profile.ProfileRoutes(api, db, jwtSecret)
+
+	kyc.RegisterRoutes(api,db,jwtSecret)
+	ecard.RegisterRoutes(api,db,jwtSecret)
 
 }
