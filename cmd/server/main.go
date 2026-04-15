@@ -4,7 +4,7 @@ import (
 	centralroutes "cryptox/packages/central_routes"
 	"cryptox/packages/config"
 	"cryptox/packages/database"
-	"cryptox/packages/redis"
+	redisClient "cryptox/packages/redis"
 	"log"
 	"os"
 
@@ -23,7 +23,7 @@ func main() {
 	}
 
 	// Connect Redis
-	rdb, err := redis.NewRedisClient(cfg)
+	rdb, err := redisClient.NewRedisClient(cfg)
 	if err != nil {
 		log.Fatal("Redis connection failed:", err)
 	}
@@ -42,5 +42,5 @@ func main() {
 
 	log.Println("Server running on port", port)
 
-	log.Fatal(app.Listen(":" + port) )
+	log.Fatal(app.Listen(":" + port))
 }
