@@ -2,6 +2,7 @@ package main
 
 import (
 	centralroutes "cryptox/packages/central_routes"
+	"cryptox/packages/cloudinary"
 	"cryptox/packages/config"
 	"cryptox/packages/database"
 	redisClient "cryptox/packages/redis"
@@ -16,6 +17,9 @@ func main() {
 	//Load config
 	cfg := config.LeadConfig()
 
+	//cloudinary
+	cloudinary.InitCloudinary()
+
 	//Connect postgres
 	db, err := database.NewPostgresConnection(cfg)
 	if err != nil {
@@ -29,7 +33,9 @@ func main() {
 	}
 
 	//fiber engine
-	app := fiber.New()
+	app := fiber.New(fiber.Config{
+		BodyLimit: 20 * 1024 *1024, //set the limit to 20mb for image uploading
+	})
 
 	//setup routes
 	centralroutes.SetUp(app, db, rdb, cfg.JWTSecret)
