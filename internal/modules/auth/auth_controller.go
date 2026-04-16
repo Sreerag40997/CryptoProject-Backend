@@ -14,7 +14,7 @@ func NewAuthController(s *AuthService) *AuthController {
 	return &AuthController{Service: s}
 }
 
-//Registration Func
+// Registration Func
 func (s *AuthController) Register(c *fiber.Ctx) error {
 
 	var newUser UserRegisterRequest
@@ -48,14 +48,13 @@ func (s *AuthController) Login(c *fiber.Ctx) error {
 	if err := c.BodyParser(&req); err != nil {
 		return c.Status(400).JSON(fiber.Map{
 			"error": utils.Error(c, 400, "invalid input", nil),
-		
 		})
 	}
 
 	user, access, refresh, err := s.Service.Login(&req)
 
 	if err != nil {
-		return utils.Error(c, 401, "Unauthorized User", err)
+		return utils.Error(c, 401, "Unauthorized User", err.Error())
 	}
 
 	c.Cookie(&fiber.Cookie{
@@ -73,7 +72,7 @@ func (s *AuthController) Login(c *fiber.Ctx) error {
 		HTTPOnly: true,
 		SameSite: "Lax",
 		Secure:   false,
-		Path:     "/",  // only sent to refresh endpoint
+		Path:     "/",              // only sent to refresh endpoint
 		MaxAge:   60 * 60 * 24 * 7, // 7 days
 	})
 
@@ -97,22 +96,22 @@ func (s *AuthController) Refresh(c *fiber.Ctx) error {
 	}
 
 	c.Cookie(&fiber.Cookie{
-		Name: "access",
-		Value: access,
-		HTTPOnly: true, 
-		SameSite: "Lax", 
-		Secure: false, 
-		Path: "/", 
-		MaxAge: 60 * 15,})
+		Name:     "access",
+		Value:    access,
+		HTTPOnly: true,
+		SameSite: "Lax",
+		Secure:   false,
+		Path:     "/",
+		MaxAge:   60 * 15})
 
 	c.Cookie(&fiber.Cookie{
-		Name: "refresh", 
-		Value: refresh, 
-		HTTPOnly: true, 
-		SameSite: "Lax", 
-		Secure:false, 
-		Path: "/", 
-		MaxAge: 60 * 60 * 24 * 7,
+		Name:     "refresh",
+		Value:    refresh,
+		HTTPOnly: true,
+		SameSite: "Lax",
+		Secure:   false,
+		Path:     "/",
+		MaxAge:   60 * 60 * 24 * 7,
 	})
 
 	return utils.Success(c, 200, "Rotated", nil)
@@ -162,4 +161,50 @@ func (s *AuthController) VerifyOTP(c *fiber.Ctx) error {
 	}
 
 	return utils.Success(c, 200, "Email Verified Successfully", nil)
+}
+
+// Forgot PassWord Func
+func (s *AuthController) ForgotPassWordOTP(c *fiber.Ctx) error {
+
+	var email struct {
+		Email string `json:"email" validate:"required,email"`
+	}
+
+	if err := c.BodyParser(&email); err != nil {
+		return utils.Error(c, 400, "Invalied Input", err)
+	}
+
+	if err := utils.Validator.Struct(&email); err != nil {
+		return utils.Error(c, 400, "Input Validation Failed", err)
+	}
+
+	if err := s.Service.ForgotPassWordOTP(email.Email); err != nil {
+		return utils.Error(c, 500, "Forgot Password OTP Sending Failed...", err.Error())
+	}
+
+	return utils.Success(c, 200, "OTP Sented", nil)
+}
+
+func (s *AuthController) ForgotPassWordNewCreation(c *fiber.Ctx) error {
+
+	var req struct {
+		Email           string `json:"email" validate:"required,email"`
+		NewPassword     string `json:"newpassword" validate:"required"`
+		ConfirmPassword string `json:"confirmpassword" validate:"required"`
+	}
+
+	if err := c.BodyParser(&req); err != nil {
+		return utils.Error(c, 400, "Invalied Input", err)
+	}
+
+	if err := utils.Validator.Struct(&req); err != nil {
+		return utils.Error(c, 400, "Input Validation Failed", err)
+	}
+
+	err := s.Service.ForgotPassWordNewCreation(req.Email, req.NewPassword, req.ConfirmPassword)
+	if err != nil {
+		return utils.Error(c, 500, "Password Changing Fauled", err.Error())
+	}
+
+	return utils.Success(c, 200, "Password Changed Successfully", nil)
 }

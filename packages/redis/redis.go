@@ -42,7 +42,7 @@ func NewRedisClient(cfg *config.Config) (*redis.Client, error) {
 			PoolSize:     10,
 		})
 
-		log.Println("Using local Redis (Docker)")
+		log.Println("Using local Redis (Docker)") 
 	}
 
 	// Test connection

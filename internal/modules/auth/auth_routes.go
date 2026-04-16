@@ -18,10 +18,15 @@ func AuthRoutes(r fiber.Router, db *gorm.DB, redis *redis.Client, jwtSecret stri
 
 	auth.Post("/register", controller.Register)
 	auth.Post("/login", controller.Login)
+	auth.Post("/sendotp", controller.SendOTP)
+	auth.Post("/forgototp", controller.ForgotPassWordOTP)
+	auth.Post("/verifyotp", controller.VerifyOTP)
+	auth.Post("/changepassword", controller.ForgotPassWordNewCreation)
+
 
 	auth.Use(middleware.AuthMiddleWare(jwtSecret))
 	auth.Post("/logout", controller.Logout)
 	auth.Post("/refresh", controller.Refresh)
-	auth.Post("/sendotp", controller.SendOTP)
-	auth.Post("/verifyotp", controller.VerifyOTP)
+	
+	
 }

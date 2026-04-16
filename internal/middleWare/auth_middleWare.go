@@ -2,7 +2,7 @@ package middleware
 
 import (
 	"context"
-	redisClient "cryptox/packages/redis"
+	"cryptox/packages/redis"
 	"cryptox/packages/utils"
 
 	"github.com/gofiber/fiber/v2"
