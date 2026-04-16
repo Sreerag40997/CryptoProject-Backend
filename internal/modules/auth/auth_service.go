@@ -143,7 +143,8 @@ func (s *AuthService) SentOtpService(email string) (OTP string, err error) {
 	RandOTP := utils.GenerateOTP()
 	log.Print("OTP:", RandOTP)
 
-	if err := utils.SentOTPEmail(email, RandOTP); err != nil {
+	htmlContent := utils.BuildOTPEmail(RandOTP)
+	if err := utils.SentToEmail(email, "Your CRYTINOX OTP", htmlContent); err != nil {
 		return "", err
 	}
 
@@ -168,5 +169,62 @@ func (s *AuthService) VerifyOTP(email, OTP string) error {
 	}
 
 	utils.DeleteOTP(email)
+	return nil
+}
+
+// Forgot Password OTP Sending Finc
+func (s *AuthService) ForgotPassWordOTP(email string) error {
+
+	isOk, err := utils.RateLimitOTP(email)
+	if err != nil {
+		return err
+	}
+	if !isOk {
+		return errors.New("Request limit exceeded, wait for 10 min")
+	}
+
+	var user User
+	err = s.repo.FindOne(&user, "email = ?", email)
+	if err != nil {
+		return err
+	}
+
+	forgotOTP := utils.GenerateOTP()
+	log.Print("OTP:", forgotOTP)
+
+	htmlContent := utils.BuildOTPEmail(forgotOTP)
+	if err := utils.SentToEmail(user.Email, "Your CRYTINOX OTP", htmlContent); err != nil {
+		return err
+	}
+
+	if err := utils.SaveOTP(user.Email, forgotOTP); err != nil {
+		return err
+	}
+
+	return nil
+}
+
+// New Password Creation Func
+func (s *AuthService) ForgotPassWordNewCreation(email, newPassword, confirmPassword string) error {
+
+	var user User
+	err := s.repo.FindOne(&user, "email = ?", email)
+	if err != nil {
+		return err
+	}
+
+	if newPassword != confirmPassword {
+		return errors.New("Passwords Not Matching")
+	}
+
+	hashedPassword, err := utils.Hashing(newPassword)
+	if err != nil {
+		return err
+	}
+
+	fields := make(map[string]interface{})
+	fields["password"] = hashedPassword
+	err = s.repo.Update(&User{}, fields, "id = ?", user.ID)
+
 	return nil
 }

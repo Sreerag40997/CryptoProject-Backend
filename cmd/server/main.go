@@ -5,7 +5,7 @@ import (
 	"cryptox/packages/cloudinary"
 	"cryptox/packages/config"
 	"cryptox/packages/database"
-	"cryptox/packages/redis"
+	redisClient "cryptox/packages/redis"
 	"log"
 	"os"
 
@@ -48,5 +48,5 @@ func main() {
 
 	log.Println("Server running on port", port)
 
-	log.Fatal(app.Listen(":" + port) )
+	log.Fatal(app.Listen(":" + port))
 }
