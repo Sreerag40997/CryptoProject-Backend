@@ -17,6 +17,7 @@ type Card struct {
 	CVV string 
 
 	Status string `gorm:"default:'active'"`
+	BlockedBy string
 
 	CreatedAt time.Time
 	UpdatedAt time.Time

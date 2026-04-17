@@ -11,6 +11,7 @@ import (
 type Repository interface {
 	Create(ctx context.Context, card *Card) error
 	GetByUserID(ctx context.Context, userID uint) (*Card, error)
+	UpdateStatus(ctx context.Context, userID uint, status,blockedBy string) error 
 }
 
 type repo struct {
@@ -36,4 +37,14 @@ func (r *repo) GetByUserID(ctx context.Context, userID uint) (*Card, error) {
 	}
 
 	return &card, nil
+}
+
+func (r *repo) UpdateStatus(ctx context.Context, userID uint, status, blockedBy string) error {
+	return r.db.WithContext(ctx).
+		Model(&Card{}).
+		Where("user_id = ?", userID).
+		Updates(map[string]interface{}{
+			"status":status,
+			"blocked_by":blockedBy,
+		}).Error
 }
