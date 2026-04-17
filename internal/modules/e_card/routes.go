@@ -15,21 +15,18 @@ func RegisterRoutes(app fiber.Router, db *gorm.DB, jwtSecret string) {
 
 	ecard := app.Group("/ecard",middleware.AuthMiddleWare(jwtSecret))
 
+  //user side apis
 	ecard.Get("/me",handler.GetMyCard)
+	ecard.Post("/block",handler.BlockCard)
+	ecard.Post("/unblock",handler.UnblockCard)
 
+	//admin side apis
 
-	  // future features
+	admin:=app.Group("/admin/ecard",middleware.AuthMiddleWare(jwtSecret),middleware.RequireRole("admin"))
 
-	  // Block card
-    // Regenerate card
-    // Card transactions
-    // Limits
-    // Freeze/unfreeze
+	admin.Get("/:userId", handler.AdminGetCard)
+	admin.Post("/:userId/block", handler.AdminBlockCard)
+	admin.Post("/:userId/unblock", handler.AdminUnblockCard)
 
-		// apis needed for future
-
-		// GET    /card/me
-    // POST   /card/block
-    // POST   /card/unblock
 
 }

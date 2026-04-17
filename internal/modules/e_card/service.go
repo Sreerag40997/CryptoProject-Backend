@@ -4,6 +4,7 @@ import (
 	"context"
 	"crypto/rand"
 	"cryptox/packages/utils"
+	"errors"
 	"fmt"
 	"math/big"
 	"os"
@@ -13,6 +14,13 @@ import (
 type Service interface {
 	CreateCard(ctx context.Context, userID uint) error
 	GetMyCard(ctx context.Context, userID uint) (*CardResponse, error)
+	BlockCard(ctx context.Context,userID uint)error
+	UnblockCard(ctx context.Context,userID uint)error
+	ValidateCard(ctx context.Context,userID uint)error
+
+  AdminGetCard(ctx context.Context, userID uint) (*CardResponse, error)
+	AdminBlockCard(ctx context.Context, userID uint) error
+	AdminUnblockCard(ctx context.Context, userID uint) error
 }
 
 type service struct {
@@ -91,6 +99,71 @@ func (s *service) GetMyCard(ctx context.Context, userID uint) (*CardResponse, er
 	maskedCard := "**** **** **** " + card.Last4
 
 	// Format expiry (MM/YY)
+	expiry := fmt.Sprintf("%02d/%02d", card.ExpiryMonth, card.ExpiryYear%100)
+
+	return &CardResponse{
+		CardNumber: maskedCard,
+		Expiry:     expiry,
+		Status:     card.Status,
+	}, nil
+}
+
+func (s *service)BlockCard(ctx context.Context,userID uint)error{
+	card,err:=s.repo.GetByUserID(ctx,userID)
+	if err!=nil{
+		return err
+	}
+
+	if card.Status == "blocked"{
+		return nil
+	}
+
+	return s.repo.UpdateStatus(ctx,userID,"blocked","")
+}
+
+func (s *service)UnblockCard(ctx context.Context,userID uint)error{
+	card,err:=s.repo.GetByUserID(ctx,userID)
+	if err!=nil{
+		return err
+	}
+	if card.Status == "active"{
+		return nil
+	}
+	if card.BlockedBy == "admin"{
+		return errors.New("card blocked by admin,cannot unblock")
+	}
+	return s.repo.UpdateStatus(ctx,userID,"active","")
+}
+
+func (s *service)ValidateCard(ctx context.Context,userID uint)error{
+	card,err:=s.repo.GetByUserID(ctx,userID)
+	if err!=nil{
+		return err
+	}
+	if card.Status != "active"{
+		return errors.New("card is not active")
+	}
+	return nil
+}
+
+func (s *service) AdminBlockCard(ctx context.Context, userID uint) error {
+
+	return s.repo.UpdateStatus(ctx, userID, "blocked", "admin")
+}
+
+func (s *service) AdminUnblockCard(ctx context.Context, userID uint) error {
+
+	return s.repo.UpdateStatus(ctx, userID, "active", "")
+}
+
+func (s *service) AdminGetCard(ctx context.Context, userID uint) (*CardResponse, error) {
+
+	card, err := s.repo.GetByUserID(ctx, userID)
+	if err != nil {
+		return nil, err
+	}
+
+	maskedCard := "**** **** **** " + card.Last4
 	expiry := fmt.Sprintf("%02d/%02d", card.ExpiryMonth, card.ExpiryYear%100)
 
 	return &CardResponse{

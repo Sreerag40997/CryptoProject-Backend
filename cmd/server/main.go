@@ -1,6 +1,7 @@
 package main
 
 import (
+	"cryptox/cmd/seed"
 	centralroutes "cryptox/packages/central_routes"
 	"cryptox/packages/cloudinary"
 	"cryptox/packages/config"
@@ -25,6 +26,9 @@ func main() {
 	if err != nil {
 		log.Fatal("Postgres connection failed:", err)
 	}
+
+	//add admin
+	seed.Addadmin(db)
 
 	// Connect Redis
 	rdb, err := redisClient.NewRedisClient(cfg)
