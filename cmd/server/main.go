@@ -38,7 +38,7 @@ func main() {
 
 	//fiber engine
 	app := fiber.New(fiber.Config{
-		BodyLimit: 20 * 1024 *1024, //set the limit to 20mb for image uploading
+		BodyLimit: 20 * 1024 * 1024, //set the limit to 20mb for image uploading
 	})
 
 	//setup routes
