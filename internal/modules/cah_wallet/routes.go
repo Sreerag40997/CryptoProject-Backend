@@ -1,20 +1,35 @@
 package cashwallet
 
+import (
+	middleware "cryptox/internal/middleWare"
 
+	"github.com/gofiber/fiber/v2"
+)
 
-  //  features
+func RegisterRoutes(app fiber.Router,service Service, jwtSecret string) {
+	handler := NewHandler(service)
 
-  //  Add money (Razorpay)
-  //  Withdraw money
-  //  Balance tracking
-  //  Transaction history
-  //  Refund support
-  //  Wallet-to-wallet transfer (future)
+	wallet := app.Group("/wallet", middleware.AuthMiddleWare(jwtSecret))
 
-	//apis needed for future
+	// user
+	wallet.Post("/set-pin", handler.SetPin)
+	wallet.Post("/change-pin", handler.ChangePin)
 
-	// GET    /wallet/balance
-  // POST   /wallet/add-money
-  // POST   /wallet/withdraw
-  // GET    /wallet/transactions
-  // POST   /wallet/transfer
+	wallet.Get("/me", handler.GetMyWallet)
+	wallet.Get("/balance", handler.GetBalance)
+	wallet.Get("/transactions", handler.GetTransactions)
+
+	wallet.Post("/deposit", handler.Deposit)
+	wallet.Post("/withdraw", handler.Withdraw)
+
+	// admin
+	admin := app.Group("/admin/wallet",middleware.AuthMiddleWare(jwtSecret), middleware.RequireRole("admin"))
+
+	admin.Post("/:userId/block", handler.BlockWallet)
+	admin.Post("/:userId/freeze", handler.FreezeWallet)
+	admin.Post("/:userId/unblock", handler.UnblockWallet)
+
+	admin.Post("/:userId/credit", handler.AdminCredit)
+
+  app.Post("/webhook/razorpay", handler.RazorpayWebhook)
+}

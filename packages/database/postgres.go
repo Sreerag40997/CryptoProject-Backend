@@ -35,8 +35,9 @@ func NewPostgresConnection(cfg *config.Config)(*gorm.DB,error){
 	err = db.AutoMigrate(
 		&auth.User{},
 		&kyc.KYC{},
-		&cashwallet.Wallet{},
 		&ecard.Card{},
+		&cashwallet.Wallet{},
+		&cashwallet.WalletTransaction{},
 	)
 	if err != nil {
 		log.Fatal(err)
