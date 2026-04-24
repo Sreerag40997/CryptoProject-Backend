@@ -13,6 +13,8 @@ type Config struct {
 	DBUrl          string
 	RedisAddr      string
 	JWTSecret      string
+	RazorpayKey    string
+	RazorpaySecret string
 }
 
 func LeadConfig() *Config {
@@ -63,5 +65,7 @@ func LeadConfig() *Config {
 		DBUrl:     dbURL,
 		RedisAddr: os.Getenv("REDIS_ADDR"),
 		JWTSecret: os.Getenv("JWT_SECRET"),
+		RazorpayKey: os.Getenv("RAZORPAY_KEY_ID"),
+		RazorpaySecret: os.Getenv("RAZORPAY_SECRET"),
 	}
 }

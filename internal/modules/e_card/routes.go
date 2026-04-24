@@ -4,13 +4,10 @@ import (
 	middleware "cryptox/internal/middleWare"
 
 	"github.com/gofiber/fiber/v2"
-	"gorm.io/gorm"
 )
 
-func RegisterRoutes(app fiber.Router, db *gorm.DB, jwtSecret string) {
+func RegisterRoutes(app fiber.Router, service Service, jwtSecret string) {
 	//Dependency wiring
-	repo := NewRepository(db)
-	service := NewService(repo)
 	handler := NewHandler(service)
 
 	ecard := app.Group("/ecard",middleware.AuthMiddleWare(jwtSecret))

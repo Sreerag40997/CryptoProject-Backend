@@ -38,11 +38,11 @@ func main() {
 
 	//fiber engine
 	app := fiber.New(fiber.Config{
-		BodyLimit: 20 * 1024 *1024, //set the limit to 20mb for image uploading
+		BodyLimit: 20 * 1024 * 1024, //set the limit to 20mb for image uploading
 	})
 
 	//setup routes
-	centralroutes.SetUp(app, db, rdb, cfg.JWTSecret)
+	centralroutes.SetUp(app, db, rdb, cfg.JWTSecret, cfg.RazorpayKey, cfg.RazorpaySecret)
 
 	port := os.Getenv("APP_PORT")
 
