@@ -31,5 +31,5 @@ func RegisterRoutes(app fiber.Router,service Service, jwtSecret string) {
 
 	admin.Post("/:userId/credit", handler.AdminCredit)
 
-  app.Post("/webhook/razorpay", handler.RazorpayWebhook)
+  app.Post("/webhook/razorpay", handler. RazorpayWebhook)
 }
