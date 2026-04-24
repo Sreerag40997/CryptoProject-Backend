@@ -3,44 +3,51 @@ package cashwallet
 import "time"
 
 type Wallet struct {
-	ID        uint      `gorm:"primaryKey"`
+	ID uint `gorm:"primaryKey"`
 
-	UserID    uint      `gorm:"uniqueIndex;not null"` 
+	UserID uint `gorm:"uniqueIndex;not null"`
 
-	WalletID  string    `gorm:"uniqueIndex;not null"` 
+	WalletID string `gorm:"uniqueIndex;not null"` // public ID 
 
-	Balance   float64   `gorm:"type:decimal(20,8);default:0"` 
+	Balance int64 `gorm:"not null;default:0"` // stored in paise
 
-	Currency  string    `gorm:"type:varchar(10);default:'INR'"`
+	PinHash string `gorm:"type:varchar(255)"`
 
-	PinHash   string    `gorm:"type:varchar(255)"` 
+	Currency string `gorm:"type:varchar(10);default:'INR'"`
 
-	Status    string    `gorm:"type:varchar(20);default:'active'"` // active, frozen, blocked
-	
+	Status string `gorm:"type:varchar(20);default:'active'"` 
+	// active | frozen | blocked
 
 	CreatedAt time.Time
 	UpdatedAt time.Time
 }
 
 type WalletTransaction struct {
-	ID        uint      `gorm:"primaryKey"`
+	ID uint `gorm:"primaryKey"`
 
-	UserID    uint      `gorm:"index;not null"`
-	WalletID  uint      `gorm:"index;not null"`
+	UserID uint `gorm:"index;not null"`
 
-	TxnID     string    `gorm:"uniqueIndex;not null"` // public txn id
+	WalletID string `gorm:"index;not null"` // matches Wallet.WalletID
 
-	Type      string    `gorm:"type:varchar(20);not null"` // credit / debit
+	TxnID string `gorm:"uniqueIndex;not null"` // public transaction ID
 
-	Amount    float64   `gorm:"type:decimal(20,8);not null"`
+	Type string `gorm:"type:varchar(20);not null"`
+	// credit | debit
 
-	BalanceAfter float64 `gorm:"type:decimal(20,8)"` // snapshot
+	Source string `gorm:"type:varchar(30);not null"`
+	// deposit | withdraw | trade | card | refund | admin
 
-	Status    string    `gorm:"type:varchar(20);default:'success'"`// success / failed / pending
+	Amount int64 `gorm:"not null"` // in paise
 
-	Reference string    `gorm:"type:varchar(255)"` // razorpay_id 
+	BalanceAfter int64 `gorm:"not null"` // snapshot after txn
 
-	Description string  `gorm:"type:text"`
+	Status string `gorm:"type:varchar(20);default:'success'"`
+	// pending | success | failed
+
+	Reference string `gorm:"type:varchar(255)"`
+	// razorpay_payment_id / order_id / trade_id
+
+	Description string `gorm:"type:text"`
 
 	CreatedAt time.Time
 }
