@@ -42,7 +42,7 @@ func main() {
 	})
 
 	//setup routes
-	centralroutes.SetUp(app, db, rdb, cfg.JWTSecret)
+	centralroutes.SetUp(app, db, rdb, cfg.JWTSecret, cfg.RazorpayKey, cfg.RazorpaySecret)
 
 	port := os.Getenv("APP_PORT")
 
