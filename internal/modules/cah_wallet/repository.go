@@ -23,6 +23,7 @@ type Repository interface {
 	GetTransactionsByUser(ctx context.Context, userID uint, limit, offset int) ([]WalletTransaction, error)
 	GetTransactionByTxnID(ctx context.Context, txnID string) (*WalletTransaction, error)
 	GetTransactionByReference(ctx context.Context, ref string) (*WalletTransaction, error)
+	UpdateTransaction(ctx context.Context, txn *WalletTransaction) error
 
 	// Core
 	Credit(ctx context.Context, userID uint, amount int64, txn *WalletTransaction) error
@@ -30,6 +31,8 @@ type Repository interface {
 
 	// Admin
 	GetAllWallets(ctx context.Context, limit, offset int) ([]Wallet, error)
+	GetPlatformWallet(ctx context.Context) (*Wallet, error)
+	CreditPlatform(ctx context.Context, amount int64, txn *WalletTransaction) error
 }
 type repo struct {
 	db *gorm.DB
@@ -66,115 +69,82 @@ func (r *repo) Credit(ctx context.Context, userID uint, amount int64, txn *Walle
 		return errors.New("amount must be greater than zero")
 	}
 
-	//  start DB transaction do all safely or fail everything
-	dbTx := r.db.WithContext(ctx).Begin()
-	if dbTx.Error != nil {
-		return dbTx.Error
-	}
-
 	var wallet Wallet
 
-	// lock the wallet row 
-	err := dbTx.Clauses(clause.Locking{Strength: "UPDATE"}).//lock wallet one at a time
+	// lock wallet row
+	err := r.db.WithContext(ctx).
+		Clauses(clause.Locking{Strength: "UPDATE"}).
 		Where("user_id = ?", userID).
 		First(&wallet).Error
 
 	if err != nil {
-		dbTx.Rollback()
 		return err
 	}
 
-	// calculate new balance
 	newBalance := wallet.Balance + amount
 
-	// update wallet balance
-	err = dbTx.Model(&Wallet{}).
+	// update balance
+	err = r.db.WithContext(ctx).
+		Model(&Wallet{}).
 		Where("id = ?", wallet.ID).
 		Update("balance", newBalance).Error
 
 	if err != nil {
-		dbTx.Rollback()
 		return err
 	}
 
-	// fill transaction details
-	txn.UserID = userID
+	// fill txn
+	txn.UserID = &userID
 	txn.WalletID = wallet.WalletID
 	txn.Type = "credit"
 	txn.Amount = amount
 	txn.BalanceAfter = newBalance
 
-	// insert transaction record
-	err = dbTx.Create(txn).Error
-	if err != nil {
-		dbTx.Rollback()
-		return err
-	}
-
-	// commit everything
-	return dbTx.Commit().Error
+	return r.db.WithContext(ctx).Create(txn).Error
 }
 
 func (r *repo) Debit(ctx context.Context, userID uint, amount int64, txn *WalletTransaction) error {
 
-	// safety check
 	if amount <= 0 {
 		return errors.New("invalid amount")
 	}
 
-	// start DB transaction
-	dbTx := r.db.WithContext(ctx).Begin()
-	if dbTx.Error != nil {
-		return dbTx.Error
-	}
-
 	var wallet Wallet
 
-	// lock wallet row
-	err := dbTx.Clauses(clause.Locking{Strength: "UPDATE"}).
+	// lock wallet
+	err := r.db.WithContext(ctx).
+		Clauses(clause.Locking{Strength: "UPDATE"}).
 		Where("user_id = ?", userID).
 		First(&wallet).Error
 
 	if err != nil {
-		dbTx.Rollback()
 		return err
 	}
 
-	// check balance
 	if wallet.Balance < amount {
-		dbTx.Rollback()
 		return errors.New("insufficient balance")
 	}
 
-	//  new balance
 	newBalance := wallet.Balance - amount
 
-	// update wallet
-	err = dbTx.Model(&Wallet{}).
+	// update
+	err = r.db.WithContext(ctx).
+		Model(&Wallet{}).
 		Where("id = ?", wallet.ID).
 		Update("balance", newBalance).Error
 
 	if err != nil {
-		dbTx.Rollback()
 		return err
 	}
 
-	//  fill transaction
-	txn.UserID = userID
+	// fill txn
+	txn.UserID = &userID
 	txn.WalletID = wallet.WalletID
 	txn.Type = "debit"
 	txn.Amount = amount
 	txn.BalanceAfter = newBalance
 
-	// insert transaction
-	err = dbTx.Create(txn).Error
-	if err != nil {
-		dbTx.Rollback()
-		return err
-	}
-
-	// commit
-	return dbTx.Commit().Error
+	return r.db.WithContext(ctx).Create(txn).Error
 }
 
 func (r *repo) GetByWalletID(ctx context.Context, walletID string) (*Wallet, error) {
@@ -255,6 +225,16 @@ func (r *repo) GetTransactionByReference(ctx context.Context, ref string) (*Wall
 	return &txn, nil
 }
 
+func (r *repo) UpdateTransaction(ctx context.Context, txn *WalletTransaction) error {
+	return r.db.WithContext(ctx).
+		Model(&WalletTransaction{}).
+		Where("txn_id = ?", txn.TxnID).
+		Updates(map[string]interface{}{
+			"status":    txn.Status,
+			"reference": txn.Reference,
+		}).Error
+}
+
 func (r *repo) GetAllWallets(ctx context.Context, limit, offset int) ([]Wallet, error) {
 
 	var wallets []Wallet
@@ -266,4 +246,48 @@ func (r *repo) GetAllWallets(ctx context.Context, limit, offset int) ([]Wallet, 
 		Find(&wallets).Error
 
 	return wallets, err
+}
+
+func (r *repo) GetPlatformWallet(ctx context.Context) (*Wallet, error) {
+	var wallet Wallet
+	err := r.db.WithContext(ctx).
+		Where("type = ?", "platform").
+		First(&wallet).Error
+
+	return &wallet, err
+}
+
+func (r *repo) WithTx(ctx context.Context, fn func(Repository) error) error {
+	return r.db.WithContext(ctx).Transaction(func(tx *gorm.DB) error {
+		txRepo := &repo{db: tx}
+		return fn(txRepo)
+	})
+}
+
+func (r *repo) CreditPlatform(ctx context.Context, amount int64, txn *WalletTransaction) error {
+
+	var wallet Wallet
+	if err := r.db.WithContext(ctx).
+		Where("type = ?", "platform").
+		First(&wallet).Error; err != nil {
+		return err
+	}
+
+	newBalance := wallet.Balance + amount
+
+	err := r.db.WithContext(ctx).
+		Model(&wallet).
+		Update("balance", newBalance).Error
+
+	if err != nil {
+		return err
+	}
+
+	txn.WalletID = wallet.WalletID
+	txn.UserID = nil
+	txn.Type = "credit"
+	txn.Amount = amount
+	txn.BalanceAfter = newBalance
+
+	return r.db.WithContext(ctx).Create(txn).Error
 }

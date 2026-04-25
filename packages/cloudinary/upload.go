@@ -18,3 +18,4 @@ func UploadFile(file multipart.File, filename string) (string, error) {
 
 	return resp.SecureURL, nil
 }
+
