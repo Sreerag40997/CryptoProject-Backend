@@ -7,6 +7,8 @@ type Wallet struct {
 
 	UserID uint `gorm:"uniqueIndex;not null"`
 
+	Type string `gorm:"type:varchar(20);default:'user'"` // user | platform
+
 	WalletID string `gorm:"uniqueIndex;not null"` // public ID 
 
 	Balance int64 `gorm:"not null;default:0"` // stored in paise
@@ -25,7 +27,7 @@ type Wallet struct {
 type WalletTransaction struct {
 	ID uint `gorm:"primaryKey"`
 
-	UserID uint `gorm:"index;not null"`
+	UserID *uint `gorm:"index"`
 
 	WalletID string `gorm:"index;not null"` // matches Wallet.WalletID
 
