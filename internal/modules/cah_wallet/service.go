@@ -170,54 +170,83 @@ func (s *service) GetTransactions(ctx context.Context, userID uint, limit, offse
 
 func (s *service) Withdraw(ctx context.Context, userID uint, amount int64, pin string) error {
 
-	// basic validation
+	// 1. Validate amount
 	if amount <= 0 {
 		return errors.New("invalid amount")
 	}
 
-	// get wallet
+	// 2. Get wallet
 	wallet, err := s.repo.GetByUserID(ctx, userID)
 	if err != nil {
 		return err
 	}
 
-	// check wallet status
+	// 3. Check wallet status
 	if wallet.Status != "active" {
 		return errors.New("wallet is not active")
 	}
 
-	// verify PIN
+	// 4. Verify PIN
 	if err := s.verifyPin(wallet, pin); err != nil {
 		return err
 	}
+
+	// 5. Check balance
 	if wallet.Balance < amount {
 		return errors.New("insufficient balance")
 	}
 
-	//  CALL RAZORPAY PAYOUT
-	payoutID, err := s.payment.CreatePayout(
-		userID,
-		amount,
-		"User Name",        // later from DB
-		"HDFC0001234",      // from KYC
-		"1234567890",       // from KYC
-	)
+	// 6. Prepare transaction (PENDING)
+	txn := &WalletTransaction{
+		TxnID:       generateTxnID(),
+		UserID:      &userID,
+		WalletID:    wallet.WalletID,
+		Type:        "debit",
+		Source:      "withdraw",
+		Amount:      amount,
+		Status:      "pending", // important
+		Description: "Withdrawal initiated",
+	}
 
-	if err != nil {
+	// 7. DEBIT FIRST (critical)
+	if err := s.repo.Debit(ctx, userID, amount, txn); err != nil {
 		return err
 	}
 
-	// prepare transaction
-	txn := &WalletTransaction{
-		TxnID:       generateTxnID(),
-		Source:      "withdraw",
-		Status:      "success",
-		Reference:   payoutID,
-		Description: "Withdrawal",
+	// 8. CALL PAYOUT (mock or real)
+	payoutID, err := s.payment.CreatePayout(
+		userID,
+		amount,
+		"User Name",   // TODO: fetch from KYC later
+		"HDFC0001234", // TODO: fetch from DB
+		"1234567890",  // TODO: fetch from DB
+	)
+
+	if err != nil {
+
+		// 🔁 ROLLBACK (very important)
+		rollbackTxn := &WalletTransaction{
+			TxnID:       generateTxnID(),
+			UserID:      &userID,
+			WalletID:    wallet.WalletID,
+			Type:        "credit",
+			Source:      "withdraw_failed",
+			Amount:      amount,
+			Status:      "success",
+			Description: "Rollback failed withdrawal",
+		}
+
+		_ = s.repo.Credit(ctx, userID, amount, rollbackTxn)
+
+		return err
 	}
 
-	// debit wallet
-	return s.repo.Debit(ctx, userID, amount, txn)
+	// 9. Mark transaction as success
+	txn.Status = "success"
+	txn.Reference = payoutID
+
+	// update transaction record
+	return s.repo.UpdateTransaction(ctx, txn)
 }
 
 func (s *service) CreateDepositOrder(ctx context.Context, userID uint, amount int64) (string, error) {
@@ -324,4 +353,18 @@ func (s *service) HandleDepositSuccess(ctx context.Context, userID uint, amount 
 
 func (s *service) VerifyPayment(orderID, paymentID, signature string) bool {
 	return s.payment.VerifySignature(orderID, paymentID, signature)
+}
+
+func (s *service) CreditPlatform(ctx context.Context, amount int64, source string) error {
+
+	txn := &WalletTransaction{
+		TxnID:       generateTxnID(),
+		UserID:      nil,
+		Type:        "credit",
+		Source:      source,
+		Amount:      amount,
+		Description: "platform earning",
+	}
+
+	return s.repo.CreditPlatform(ctx, amount, txn)
 }
