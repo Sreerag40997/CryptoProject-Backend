@@ -103,7 +103,7 @@ func (s *AuthController) Refresh(c *fiber.Ctx) error {
 		SameSite: "Lax",
 		Secure:   false,
 		Path:     "/",
-		MaxAge:   60 * 15})
+		MaxAge:   60 * 60 * 24 * 7})
 
 	c.Cookie(&fiber.Cookie{
 		Name:     "refresh",
