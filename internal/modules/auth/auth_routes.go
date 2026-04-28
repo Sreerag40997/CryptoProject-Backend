@@ -28,5 +28,12 @@ func AuthRoutes(r fiber.Router, db *gorm.DB, redis *redis.Client, jwtSecret stri
 	auth.Post("/logout", controller.Logout)
 	auth.Post("/refresh", controller.Refresh)
 	
-	
+	////////// Admin Routes \\\\\\\\\\
+
+	admin := r.Group("/admin")
+
+	admin.Get("/getallusers", controller.GetAllUsers)
+	admin.Get("/getbyid/:id", controller.GetByID)
+	admin.Post("/editprofile/:id", controller.EditProfile)
+	admin.Post("/blockunblock/:id", controller.BlockUnblock)
 }
