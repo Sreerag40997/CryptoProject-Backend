@@ -15,8 +15,20 @@ func (r *PgSQLRepository) Create(req interface{}) error {
 	return r.DB.Create(req).Error
 }
 
+//Save
+func (r *PgSQLRepository) Save(model interface{}) error {
+	return r.DB.Save(model).Error
+}
+
 func (r *PgSQLRepository) FindOne(model interface{}, query string, args ...any) error {
 	return r.DB.Where(query, args...).First(model).Error
+}
+
+//find all func
+func (r *PgSQLRepository) FindAll() ([]User, error) {
+	var model []User
+	err := r.DB.Find(&model).Error
+	return model, err
 }
 
 //update

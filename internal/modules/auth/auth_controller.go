@@ -2,6 +2,7 @@ package auth
 
 import (
 	"cryptox/packages/utils"
+	"strconv"
 
 	"github.com/gofiber/fiber/v2"
 )
@@ -207,4 +208,73 @@ func (s *AuthController) ForgotPassWordNewCreation(c *fiber.Ctx) error {
 	}
 
 	return utils.Success(c, 200, "Password Changed Successfully", nil)
+}
+
+//////////////// Admin Functions \\\\\\\\\\\\\\\\
+
+func (s *AuthController) GetAllUsers(c *fiber.Ctx) error {
+
+	users, err := s.Service.GetAllUsers()
+	if err != nil {
+		return utils.Error(c, 500, "Users Getting Failed", err)
+	}
+
+	return utils.Success(c, 200, "success", users)
+}
+
+func (s *AuthController) GetByID(c *fiber.Ctx) error {
+
+	idStr := c.Params("id")
+
+	id, err := strconv.ParseUint(idStr, 10, 64)
+	if err != nil {
+		return utils.Error(c, 400, "invaled userID", err)
+	}
+
+	user, err2 := s.Service.GetByID(uint(id))
+	if err2 != nil {
+		return utils.Error(c, 500, "User Not Found", err2)
+	}
+
+	return utils.Success(c, 200, "success", user)
+}
+
+func (s *AuthController) EditProfile(c *fiber.Ctx) error {
+
+	idStr := c.Params("id")
+
+	id, err := strconv.ParseUint(idStr, 10, 64)
+	if err != nil {
+		return utils.Error(c, 400, "invaled userID", err)
+	}
+
+	var req EditProfileReq
+	if err := c.BodyParser(&req); err != nil {
+		return utils.Error(c, 400, "invaled input", err)
+	}
+
+	editedprofile, err1 := s.Service.EditProfile(uint(id), &req)
+	if err1 !=nil {
+		return utils.Error(c, 500, "updating failed", err1)
+	}
+
+	return utils.Success(c, 200, "success", editedprofile)
+}
+
+// Block Unblock
+func (s *AuthController) BlockUnblock(c *fiber.Ctx) error {
+
+	idStr := c.Params("id")
+
+	id, err := strconv.ParseUint(idStr, 10, 64)
+	if err != nil {
+		return utils.Error(c, 400, "invaled userID", err.Error())
+	}
+
+	status, err := s.Service.BlockUnblock(uint(id))
+	if err != nil {
+		return utils.Error(c, 500, " BlockUnblock failed", err.Error())
+	}
+
+	return utils.Success(c, 200, "success", status)
 }
