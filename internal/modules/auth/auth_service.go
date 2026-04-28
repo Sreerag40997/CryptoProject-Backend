@@ -228,3 +228,90 @@ func (s *AuthService) ForgotPassWordNewCreation(email, newPassword, confirmPassw
 
 	return nil
 }
+
+//////////////// Admin Functions \\\\\\\\\\\\\\\\
+
+func (s *AuthService) GetAllUsers() ([]UserLoginResponse, error) {
+	datas, err := s.repo.FindAll()
+	if err != nil {
+		return nil, err
+	}
+
+	var response []UserLoginResponse
+
+	for _, user := range datas {
+		response = append(response, UserLoginResponse{
+			ID:            user.ID,
+			Name:          user.Name,
+			Email:         user.Email,
+			Role:          user.Role,
+			KYCStatus:     user.KYCStatus,
+			IsVerified:    user.IsVerified,
+			IsBlocked:     user.IsBlocked,
+			ProfilePicURL: user.ProfilePicURL,
+			CreatedAt:     user.CreatedAt,
+			UpdatedAt:     user.UpdatedAt,
+		})
+	}
+
+	return response, nil
+}
+
+func (s *AuthService) GetByID(userID uint) (interface{}, error) {
+	var user User
+	err := s.repo.FindOne(&user, "id = ?", userID)
+	if err != nil {
+		return nil, err
+	}
+
+	response := &UserLoginResponse{
+			ID:            user.ID,
+			Name:          user.Name,
+			Email:         user.Email,
+			Role:          user.Role,
+			KYCStatus:     user.KYCStatus,
+			IsVerified:    user.IsVerified,
+			IsBlocked:     user.IsBlocked,
+			ProfilePicURL: user.ProfilePicURL,
+			CreatedAt:     user.CreatedAt,
+			UpdatedAt:     user.UpdatedAt,
+		}
+
+	return response, nil
+}
+
+func (s *AuthService) EditProfile(userID uint, req *EditProfileReq) (interface{}, error) {
+	var user User
+	if err := s.repo.FindOne(&user, "id = ?", userID); err != nil {
+		return nil, err
+	}
+
+	if req.Name != "" {
+		user.Name = req.Name
+	}
+	if req.Email != "" {
+		user.Email = req.Email
+	}
+	if req.Role != "" {
+		user.Role = req.Role
+	}
+
+	if err := s.repo.Save(&user); err != nil {
+		return nil, err
+	}
+
+	return &user, nil
+}
+
+//Block Unblock
+func (s *AuthService) BlockUnblock(userID uint) (bool, error) {
+
+	var user User
+	if err := s.repo.FindOne(&user, "id = ?", userID); err != nil {
+		return false, err
+	}
+
+	status := !user.IsBlocked
+
+	return status, s.repo.Update(&user,  map[string]interface{}{"IsBlocked": status}, "id = ?", user.ID)
+}

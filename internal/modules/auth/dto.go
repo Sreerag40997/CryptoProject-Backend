@@ -31,3 +31,13 @@ type UserLoginResponse struct {
 	UpdatedAt     time.Time `json:"updated_at"`
 }
 
+type EditProfileReq struct {
+	Name          string 
+	Email         string 
+	Role          string 
+	KYCStatus     bool
+	IsVerified    bool
+	IsBlocked     bool
+	ProfilePicURL string
+}
+
