@@ -3,6 +3,7 @@ package centralroutes
 import (
 	"cryptox/internal/modules/auth"
 	cashwallet "cryptox/internal/modules/cah_wallet"
+	cryptowallet "cryptox/internal/modules/crypto_wallet"
 	ecard "cryptox/internal/modules/e_card"
 	"cryptox/internal/modules/kyc"
 	"cryptox/internal/modules/payment"
@@ -33,6 +34,10 @@ func SetUp(app *fiber.App, db *gorm.DB, rdb *redis.Client, jwtSecret,razorpayKey
 	kycRepo := kyc.NewRepository(db)
 	kycService := kyc.NewService(kycRepo, walletService, ecardService)
 
+	// crypto wallet
+	cryptoRepo:=cryptowallet.NewRepository(db)
+	cryptoService:=cryptowallet.NewService(cryptoRepo)
+
 	// routes
 	auth.AuthRoutes(api, db, rdb, jwtSecret)
 	profile.ProfileRoutes(api, db, jwtSecret)
@@ -40,6 +45,6 @@ func SetUp(app *fiber.App, db *gorm.DB, rdb *redis.Client, jwtSecret,razorpayKey
 	kyc.RegisterRoutes(api, kycService, jwtSecret)
 	ecard.RegisterRoutes(api, ecardService, jwtSecret)
 	cashwallet.RegisterRoutes(api, walletService, jwtSecret)
-
+	cryptowallet.RegisterRoutes(api,cryptoService,jwtSecret)
 	
 }

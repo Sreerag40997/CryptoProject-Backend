@@ -3,6 +3,7 @@ package database
 import (
 	"cryptox/internal/modules/auth"
 	cashwallet "cryptox/internal/modules/cah_wallet"
+	cryptowallet "cryptox/internal/modules/crypto_wallet"
 	ecard "cryptox/internal/modules/e_card"
 	"cryptox/internal/modules/kyc"
 	"cryptox/packages/config"
@@ -38,6 +39,9 @@ func NewPostgresConnection(cfg *config.Config)(*gorm.DB,error){
 		&ecard.Card{},
 		&cashwallet.Wallet{},
 		&cashwallet.WalletTransaction{},
+		&cryptowallet.CryptoWallet{},
+		&cryptowallet.CryptoAsset{},
+		&cryptowallet.CryptoWalletTransaction{},
 	)
 	if err != nil {
 		log.Fatal(err)
