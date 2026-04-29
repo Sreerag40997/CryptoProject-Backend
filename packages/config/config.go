@@ -19,7 +19,7 @@ type Config struct {
 
 func LeadConfig() *Config {
 
-	err := godotenv.Load("../../.env")
+	err := godotenv.Load(".env")
 	if err != nil {
 		log.Println("No env file found")
 		log.Println("Error loading .env:", err)
