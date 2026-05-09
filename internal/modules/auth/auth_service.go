@@ -8,6 +8,7 @@ import (
 	"time"
 
 	"github.com/redis/go-redis/v9"
+	"gorm.io/gorm"
 )
 
 var (
@@ -26,12 +27,22 @@ func NewAuthService(repo Repository, redis *redis.Client, jwtSecret string) *Aut
 
 // Register func 
 func (s *AuthService) Register(req *UserRegisterRequest) (interface{}, error) {
-
+	
 	var existing User
-	if err := s.repo.FindOne(&existing, "email = ?", req.Email); err != nil {
-		return nil, errors.New("email already exists")
+	err := s.repo.FindOne(&existing, "email = ?", req.Email)
+	if err == nil {
+		return nil, err
 	}
 
+	// Unexpected DB Error
+	if !errors.Is(err, gorm.ErrRecordNotFound) {
+		return nil, err
+	}
+
+	if req.Password != req.ConformPassword {
+		return  nil, errors.New("password miss match")
+	}
+	
 	hashed, err := utils.Hashing(req.Password)
 	if err != nil {
 		return nil, err
