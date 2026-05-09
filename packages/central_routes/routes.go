@@ -6,6 +6,7 @@ import (
 	cryptowallet "cryptox/internal/modules/crypto_wallet"
 	ecard "cryptox/internal/modules/e_card"
 	"cryptox/internal/modules/kyc"
+	"cryptox/internal/modules/market"
 	"cryptox/internal/modules/payment"
 
 	"cryptox/internal/modules/profile"
@@ -46,5 +47,8 @@ func SetUp(app *fiber.App, db *gorm.DB, rdb *redis.Client, jwtSecret,razorpayKey
 	ecard.RegisterRoutes(api, ecardService, jwtSecret)
 	cashwallet.RegisterRoutes(api, walletService, jwtSecret)
 	cryptowallet.RegisterRoutes(api,cryptoService,jwtSecret)
+
+	// Live Market Data
+	market.RegisterRoutes(api, rdb)
 	
 }
