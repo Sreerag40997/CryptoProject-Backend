@@ -35,7 +35,7 @@ func (s *AuthController) Register(c *fiber.Ctx) error {
 
 	user, err := s.Service.Register(&newUser)
 	if err != nil {
-		return utils.Error(c, 400, "Registration failed", err)
+		return utils.Error(c, 400, "Registration failed", err.Error())
 	}
 
 	return utils.Success(c, 200, "Registration Successful", user)
