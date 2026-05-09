@@ -6,6 +6,7 @@ type UserRegisterRequest struct {
 	Name string `json:"name"`
 	Email string `json:"email"`
 	Password string `json:"password"`
+	ConformPassword string `json:"conformpassword"`
 }
 
 type UserRegisterResponse struct {
