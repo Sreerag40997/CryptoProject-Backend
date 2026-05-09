@@ -67,6 +67,7 @@ import (
 	cryptowallet "cryptox/internal/modules/crypto_wallet"
 	ecard "cryptox/internal/modules/e_card"
 	"cryptox/internal/modules/kyc"
+	"cryptox/internal/modules/market"
 	"cryptox/internal/modules/payment"
 	"cryptox/internal/modules/profile"
 
@@ -131,8 +132,18 @@ func SetUp(app *fiber.App, db *gorm.DB, rdb *redis.Client, jwtSecret, razorpayKe
 
 	kyc.RegisterRoutes(api, kycService, jwtSecret)
 	ecard.RegisterRoutes(api, ecardService, jwtSecret)
+<<<<<<< HEAD
 	cashwallet.RegisterRoutes(api, cashWalletService, jwtSecret)
 	cryptowallet.RegisterRoutes(api, cryptoWalletService, jwtSecret)
 
 	tradeengine.RegisterRoutes(api, tradeService, jwtSecret)
 }
+=======
+	cashwallet.RegisterRoutes(api, walletService, jwtSecret)
+	cryptowallet.RegisterRoutes(api,cryptoService,jwtSecret)
+
+	// Live Market Data
+	market.RegisterRoutes(api, rdb)
+	
+}
+>>>>>>> a519828d9dda81d1f2e3aca6487021446a632b02
