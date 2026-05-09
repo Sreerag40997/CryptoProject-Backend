@@ -6,6 +6,7 @@ import (
 	cryptowallet "cryptox/internal/modules/crypto_wallet"
 	ecard "cryptox/internal/modules/e_card"
 	"cryptox/internal/modules/kyc"
+	"cryptox/internal/modules/trade_engine/model"
 	"cryptox/packages/config"
 	"log"
 	"time"
@@ -42,6 +43,10 @@ func NewPostgresConnection(cfg *config.Config)(*gorm.DB,error){
 		&cryptowallet.CryptoWallet{},
 		&cryptowallet.CryptoAsset{},
 		&cryptowallet.CryptoWalletTransaction{},
+		// trade engine models
+		&model.Order{},
+		&model.Trade{},
+		&model.OrderFill{},
 	)
 	if err != nil {
 		log.Fatal(err)
