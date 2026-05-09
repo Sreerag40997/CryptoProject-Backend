@@ -1,133 +1,126 @@
-# 🚀 Crypto Project
+# Crytinox — Crypto Exchange Simulation
 
-A modern cryptocurrency-based application designed to [briefly describe your purpose — e.g., track prices, enable transactions, or build a blockchain solution].
+A full-stack cryptocurrency exchange backend built in **Go + Fiber**, simulating real-world trading infrastructure with live Binance market data, advanced order types, and automated order execution.
 
----
-
-## 📌 Features
-
-* 🔐 Secure authentication
-* 💰 Real-time crypto price tracking
-* 📊 Interactive charts and analytics
-* 🔄 Fast and reliable transactions
-* 🌐 API integration (e.g., CoinGecko / Binance)
-* 📱 Responsive design
+> **Status:** In Progress &nbsp;|&nbsp; **Team:** 2 developers
 
 ---
 
-## 🛠️ Tech Stack
+## What This Is
 
-* **Frontend:** [React / Vue / HTML-CSS-JS]
-* **Backend:** [Node.js / Django / Flask]
-* **Database:** [MongoDB / PostgreSQL]
-* **Blockchain:** [Ethereum / Solidity / Web3.js]
-* **APIs:** [Crypto APIs you used]
+Crytinox is not a price tracker or a simple CRUD app. It is a simulation of a real crypto exchange backend — with an order book, automated order matching engine, live market data pipeline, and a payment-verified wallet system.
 
 ---
 
-## 📂 Project Structure
+## Key Features
 
-```
-crypto-project/
-│── client/        # Frontend code
-│── server/        # Backend code
-│── contracts/     # Smart contracts (if any)
-│── docs/          # Documentation
-│── .env           # Environment variables
-│── package.json
-│── README.md
-```
+**Order Engine**
+- Supports 7 order types: Market, Limit, Stop-Market, Stop-Limit, Take-Profit, OCO, Trailing Stop
+- Atomic database transactions on every order execution — no partial state
+- Price Watcher Goroutine runs every 3 seconds, evaluating all pending orders concurrently against live Binance prices from Redis
 
----
+**Real-Time Price Pipeline**
+- Binance WebSocket → Redis → Fiber SSE broadcaster → React UI
+- Live price updates pushed to all connected clients every 2 seconds
+- Zero polling — fully event-driven
 
-## ⚙️ Installation
+**Payment & Wallet**
+- Razorpay integration with HMAC-SHA256 webhook signature verification
+- Idempotency guards on wallet credit — funds added only on verified server-side event, never on frontend callback
+- Prevents double-credit on duplicate webhook delivery
 
-1. Clone the repository:
-
-```
-git clone https://github.com/your-username/crypto-project.git
-```
-
-2. Navigate to the project:
-
-```
-cd crypto-project
-```
-
-3. Install dependencies:
-
-```
-npm install
-```
-
-4. Run the development server:
-
-```
-npm run dev
-```
+**Auth & Security**
+- JWT-based authentication with RBAC
+- Secure session management
 
 ---
 
-## 🔑 Environment Variables
+## Tech Stack
 
-Create a `.env` file and add:
+| Layer | Technology |
+|---|---|
+| Language | Go (Golang) |
+| Framework | Fiber |
+| Database | PostgreSQL |
+| Caching | Redis |
+| Real-Time | WebSockets |
+| Payments | Razorpay |
+| Frontend | React |
+| DevOps | Docker, Docker Compose |
+| Architecture | Clean Architecture |
+
+---
+
+## Architecture Overview
 
 ```
-API_KEY=your_api_key
-SECRET_KEY=your_secret
-DATABASE_URL=your_database_url
+Binance WebSocket
+      │
+      ▼
+  Redis Cache  ◄──── Price Watcher Goroutine (every 3s)
+      │                      │
+      │              Evaluates pending orders
+      │              Executes matches atomically
+      ▼
+Fiber Broadcaster
+      │
+      ▼
+  React UI (live prices every 2s)
 ```
 
 ---
 
-## 🚀 Usage
-
-* Open `http://localhost:3000` in your browser
-* Sign up / log in
-* Start exploring crypto features
-
----
-
-## 🧪 Testing
-
-Run tests using:
+## Project Structure
 
 ```
-npm test
+CryptoProject-Backend/
+├── cmd/                  # Entry point
+├── internal/
+│   ├── modules/           # modules all (with repo,service,handlers,routes)
+├── pkg/                  # Shared utilities (JWT, HMAC, etc.)
+├── docker-compose.yml
+└── .env.example
 ```
 
 ---
 
-## 🤝 Contributing
+## Getting Started
 
-Contributions are welcome!
+**Prerequisites:** Go 1.21+, PostgreSQL, Redis, Docker (optional)
 
-1. Fork the repo
-2. Create a new branch (`feature/your-feature`)
-3. Commit your changes
-4. Push and open a Pull Request
+```bash
+# Clone the repo
+git clone https://github.com/tibin-peter/CryptoProject-Backend.git
+cd CryptoProject-Backend
 
----
+# Copy environment variables
+cp .env.example .env
+# Fill in your PostgreSQL, Redis, Razorpay, and Binance API credentials
 
-## 🐛 Issues
+# Run with Docker
+docker-compose up --build
 
-If you find bugs, please open an issue in the repository.
-
----
-
-## 📄 License
-
-This project is licensed under the MIT License.
-
----
-
-## 👨‍💻 Author
-
-* Your Name
-* GitHub: https://github.com/your-username
+# Or run locally
+go run cmd/main.go
+```
 
 ---
 
-## ⭐ Support
+## Environment Variables
 
-If you like this project, give it a ⭐ on GitHub!
+```env
+DB_URL=postgres://user:password@localhost:5432/crytinox
+REDIS_URL=localhost:6379
+JWT_SECRET=your_jwt_secret
+RAZORPAY_KEY_ID=your_key_id
+RAZORPAY_KEY_SECRET=your_key_secret
+BINANCE_WS_URL=wss://stream.binance.com:9443/ws
+```
+
+---
+
+## Authors
+
+1.
+**Tibin Peter** — Backend Developer  
+[GitHub](https://github.com/tibin-peter) · [LinkedIn](https://www.linkedin.com/in/tibin-peter-b9496a282/) · [Portfolio](https://tibin-peter-portfolio.vercel.app/)
