@@ -12,6 +12,7 @@ type Engine struct {
 }
 
 func NewEngine(executor *Executor) *Engine {
+
 	return &Engine{
 		orderBook: NewOrderBook(),
 		executor:  executor,
@@ -20,14 +21,18 @@ func NewEngine(executor *Executor) *Engine {
 }
 
 func (e *Engine) Start() {
+
 	go func() {
+
 		for order := range e.queue {
+
 			e.process(order)
 		}
 	}()
 }
 
 func (e *Engine) Submit(order *model.Order) {
+
 	e.queue <- order
 }
 
@@ -37,8 +42,12 @@ func (e *Engine) process(order *model.Order) {
 
 	for _, match := range matches {
 
-		if order.RemainingQty == 0 {
+		if order.RemainingQty <= 0 {
 			break
+		}
+
+		if match.RemainingQty <= 0 {
+			continue
 		}
 
 		qty := min(order.RemainingQty, match.RemainingQty)
@@ -54,10 +63,22 @@ func (e *Engine) process(order *model.Order) {
 		if err != nil {
 			continue
 		}
+
+		// remove filled orders
+
+		if match.RemainingQty == 0 {
+			e.orderBook.Remove(match)
+		}
 	}
+
+	// add remaining order
 
 	if order.RemainingQty > 0 {
-		e.orderBook.AddOrder(order)
-	}
-}
 
+		e.orderBook.AddOrder(order)
+
+		return
+	}
+
+	e.orderBook.Remove(order)
+}

@@ -30,9 +30,10 @@ type Repository interface {
 	// transaction
 	WithTx(ctx context.Context, fn func(Repository) error) error
 
-GetTradesByUser(ctx context.Context, userID uint, limit, offset int) ([]model.Trade, error)
-GetOrderFills(ctx context.Context, orderID uint) ([]model.OrderFill, error)
-GetTradesBySymbol(ctx context.Context, symbol string, limit int) ([]model.Trade, error)
+  GetTradesByUser(ctx context.Context, userID uint, limit, offset int) ([]model.Trade, error)
+  GetOrderFills(ctx context.Context, orderID uint) ([]model.OrderFill, error)
+  GetTradesBySymbol(ctx context.Context, symbol string, limit int) ([]model.Trade, error)
+  GetOpenTriggerOrders(ctx context.Context) ([]model.Order, error)
 }
 
 
@@ -195,3 +196,20 @@ func (r *repo) WithTx(ctx context.Context, fn func(Repository) error) error {
 	})
 }
 
+func (r *repo) GetOpenTriggerOrders(
+	ctx context.Context,
+) ([]model.Order, error) {
+
+	var orders []model.Order
+
+	err := r.db.WithContext(ctx).
+		Where(
+			"(type = ? OR type = ?) AND status = ?",
+			"stop_loss",
+			"take_profit",
+			"open",
+		).
+		Find(&orders).Error
+
+	return orders, err
+}
