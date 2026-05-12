@@ -34,6 +34,11 @@ func (e *Executor) Execute(
 	price int64,
 ) error {
 
+	// prevent self trade
+	if buy.UserID == sell.UserID{
+		return nil
+	}
+
 	// create trade
 	trade := &model.Trade{
 		Symbol:      buy.Symbol,

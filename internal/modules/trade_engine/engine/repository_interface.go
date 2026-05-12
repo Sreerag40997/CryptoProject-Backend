@@ -9,6 +9,7 @@ type Repository interface {
 	CreateTrade(ctx context.Context, trade *model.Trade) error
 	CreateOrderFill(ctx context.Context, fill *model.OrderFill) error
 	UpdateOrder(ctx context.Context, order *model.Order) error
-
+  CreateOrder(ctx context.Context, order *model.Order) error
+	GetOpenTriggerOrders(ctx context.Context) ([]model.Order, error)
 }
 

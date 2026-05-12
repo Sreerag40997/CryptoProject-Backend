@@ -10,9 +10,7 @@ func RegisterRoutes(app fiber.Router, service Service, jwtSecret string) {
 
 	h := NewHandler(service)
 
-	/////////////////////////////////////////////////////////
-	// USER ROUTES (AUTH REQUIRED)
-	/////////////////////////////////////////////////////////
+	//user routes
 
 	trade := app.Group(
 		"/trade",
@@ -27,9 +25,7 @@ func RegisterRoutes(app fiber.Router, service Service, jwtSecret string) {
 	trade.Get("/trades", h.GetMyTrades)
 	trade.Get("/order/:id/fills", h.GetOrderFills)
 
-	/////////////////////////////////////////////////////////
-	// PUBLIC ROUTES (NO AUTH)
-	/////////////////////////////////////////////////////////
+  //public apis
 
 	public := app.Group("/trade")
 
