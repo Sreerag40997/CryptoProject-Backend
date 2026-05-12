@@ -2,9 +2,12 @@ package tradeengine
 
 import (
 	"context"
+	"cryptox/internal/modules/market"
 	"cryptox/internal/modules/trade_engine/engine"
 	"cryptox/internal/modules/trade_engine/model"
+	"encoding/json"
 	"errors"
+	"fmt"
 	"strconv"
 
 	"github.com/redis/go-redis/v9"
@@ -54,37 +57,82 @@ type CreateOrderReq struct {
 	Side     string `json:"side"`   // buy / sell
 	Type     string `json:"type"`   // market / limit
 	Price    int64  `json:"price"`
+	StopPrice int64 `json:"stopprice"`
+	TargetPrice int64 `json:"targetprice"`
 	Quantity int64  `json:"quantity"`
 }
 
 
-func (s *service) PlaceOrder(ctx context.Context, userID uint, req CreateOrderReq) error {
+func (s *service) PlaceOrder(
+	ctx context.Context,
+	userID uint,
+	req CreateOrderReq,
+) error {
 
 	if req.Quantity <= 0 {
 		return errors.New("invalid quantity")
 	}
 
+	// validate side
+
 	if req.Side != "buy" && req.Side != "sell" {
 		return errors.New("invalid side")
 	}
 
-	if req.Type == "limit" && req.Price <= 0 {
-		return errors.New("price required for limit order")
+	// validate type
+
+	validTypes := map[string]bool{
+		"market":      true,
+		"limit":       true,
+		"stop_loss":   true,
+		"take_profit": true,
+	}
+
+	if !validTypes[req.Type] {
+		return errors.New("invalid order type")
 	}
 
 	var price int64
 
+	// MARKET ORDER
+
 	if req.Type == "market" {
+
 		p, err := s.getMarketPrice(ctx, req.Symbol)
 		if err != nil {
 			return err
 		}
+
 		price = p
-	} else {
+	}
+
+	// LIMIT ORDER
+
+	if req.Type == "limit" {
+
 		if req.Price <= 0 {
-			return errors.New("price required for limit order")
+			return errors.New("price required")
 		}
+
 		price = req.Price
+	}
+
+	// STOP LOSS VALIDATION
+
+	if req.Type == "stop_loss" {
+
+		if req.StopPrice <= 0 {
+			return errors.New("stop price required")
+		}
+	}
+
+	// TAKE PROFIT VALIDATION
+
+	if req.Type == "take_profit" {
+
+		if req.TargetPrice <= 0 {
+			return errors.New("target price required")
+		}
 	}
 
 	order := &model.Order{
@@ -96,13 +144,22 @@ func (s *service) PlaceOrder(ctx context.Context, userID uint, req CreateOrderRe
 		Quantity:     req.Quantity,
 		RemainingQty: req.Quantity,
 		Status:       "open",
+		StopPrice:    req.StopPrice,
+		TargetPrice:  req.TargetPrice,
 	}
 
-	err:= s.repo.CreateOrder(ctx, order)
-	if err!=nil{
+	// save order
+
+	if err := s.repo.CreateOrder(ctx, order); err != nil {
 		return err
 	}
-	s.eng.Submit(order)
+
+	// ONLY market + limit go directly to engine
+
+	if req.Type == "market" || req.Type == "limit" {
+
+		s.eng.Submit(order)
+	}
 
 	return nil
 }
@@ -208,18 +265,28 @@ func (s *service) GetOrdersByUserAdmin(ctx context.Context, userID uint, limit, 
 
 
 func (s *service) getMarketPrice(ctx context.Context, symbol string) (int64, error) {
+    key := "market:ticker:" + symbol
 
-	key := "market:price:" + symbol
+    val, err := s.redis.Get(ctx, key).Result()
+    if err != nil {
+        return 0, err
+    }
 
-	val, err := s.redis.Get(ctx, key).Result()
-	if err != nil {
-		return 0, err
-	}
+    var ticker market.Ticker
+    if err := json.Unmarshal([]byte(val), &ticker); err != nil {
+        return 0, err
+    }
 
-	price, err := strconv.ParseInt(val, 10, 64)
-	if err != nil {
-		return 0, err
-	}
+    // string to decemal
+    rawPrice, err := strconv.ParseFloat(ticker.LastPrice, 64)
+    if err != nil {
+        return 0, fmt.Errorf("invalid price format: %v", err)
+    }
+    
+		//convert to paisa
+    const usdToInrRate = 83.50 
+    priceInInrPaisa := int64(rawPrice * usdToInrRate * 100)
 
-	return price, nil
+
+    return priceInInrPaisa, nil
 }
