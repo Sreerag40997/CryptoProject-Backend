@@ -65,7 +65,7 @@ func (s *AuthController) Login(c *fiber.Ctx) error {
 		SameSite: "Lax", // Strict in production
 		Secure:   false, // true in production (HTTPS)
 		Path:     "/",
-		MaxAge:   60 * 60 * 24 * 7, // 15 minutes
+		MaxAge:   60 * 60 * 24 * 7, // 7 days
 	})
 	c.Cookie(&fiber.Cookie{
 		Name:     "refresh",
