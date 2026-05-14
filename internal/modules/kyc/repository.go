@@ -11,6 +11,8 @@ type Repository interface {
 	Create(ctx context.Context, kyc *KYC) error
 	GetByUserID(ctx context.Context, userID uint) (*KYC, error)
 	Update(ctx context.Context, kyc *KYC) error
+	FindUserById(ctx context.Context,model interface{}, query string, args ...any) error 
+	UpdateUser(ctx context.Context,model interface{},query string,data interface{}, field string, args ...any,) error
 
 	// Admin Side
 	GetByID(ctx context.Context, id uint) (*KYC, error)
@@ -62,7 +64,17 @@ func (r *repo) GetByID(ctx context.Context, id uint) (*KYC, error) {
 
 	return &kyc, nil
 }
+func (r *repo) FindUserById(ctx context.Context,model interface{}, query string, args ...any) error {
+	return r.db.Where(query, args...).First(model).Error
+}
+func (r *repo) UpdateUser(ctx context.Context,model interface{}, query string,data interface{}, field string, args ...any) error {
 
+	return r.db.
+		WithContext(ctx).
+		Model(model).
+		Where(query, args).
+		Update(field, data).Error
+}
 func (r *repo) ListPending(ctx context.Context,status string) ([]KYC, error) {
 	var kycs []KYC
 
@@ -105,7 +117,7 @@ func (r *repo) ListWithFilter(ctx context.Context, status string, limit, offset 
 	query := r.db.WithContext(ctx)
 
 	if status != "" {
-		query = query.Where("status = ?", status)
+		query = query.Where("status != ?", status)
 	}
 
 	err := query.
