@@ -2,12 +2,12 @@ package kyc
 
 import (
 	"context"
+	"cryptox/internal/modules/auth"
 	cashwallet "cryptox/internal/modules/cah_wallet"
 	ecard "cryptox/internal/modules/e_card"
 	"cryptox/packages/cloudinary"
 	"cryptox/packages/utils"
 	"errors"
-	"fmt"
 	"mime/multipart"
 	"os"
 	"regexp"
@@ -18,7 +18,7 @@ import (
 type Service interface {
 	SubmitKYC(ctx context.Context, userID uint, req *SubmitKYCRequest) error
 	GetKYCStatus(ctx context.Context, userID uint) (map[string]interface{}, error)
-	GetMyKYC(ctx context.Context, userID uint) (*KYCResponse, error) 
+	GetMyKYC(ctx context.Context, userID uint) (*KYCResponse, (error)) 
 	UpdateKYC(ctx context.Context, userID uint, req *UpdateKYCRequest) error
 
 	GetKYCList(ctx context.Context, status string, page int, limit int) ([]KYC, error)
@@ -43,7 +43,6 @@ func NewService(repo Repository,cashWalletService cashwallet.Service, cardServic
 
 // submit kyc
 func (s *service) SubmitKYC(ctx context.Context, userID uint, req *SubmitKYCRequest) error {
-  fmt.Println(req)
 	// validate pan
 	panRegex := regexp.MustCompile(`^[A-Z]{5}[0-9]{4}[A-Z]$`)
 	if !panRegex.MatchString(req.PANNumber) {
@@ -275,8 +274,10 @@ func (s *service) UpdateKYC(ctx context.Context, userID uint, req *UpdateKYCRequ
 }
 
 func (s *service) GetKYCList(ctx context.Context, status string, page int, limit int) ([]KYC, error) {
-
+	
 	offset := (page - 1) * limit
+
+	status = "verified"
 
 	return s.repo.ListWithFilter(ctx, status, limit, offset)
 }
@@ -284,9 +285,12 @@ func (s *service) GetKYCList(ctx context.Context, status string, page int, limit
 func (s *service) GetKYCByID(ctx context.Context, id uint) (*KYC, error) {
 	return s.repo.GetByID(ctx, id)
 }
-
-func (s *service) UpdateKYCStatus(ctx context.Context, id uint, status string, reason string) error {
-
+func (s *service) UpdateKYCStatus(
+	ctx context.Context,
+	id uint,
+	status string,
+	reason string,
+) (error) {
 	kyc, err := s.repo.GetByID(ctx, id)
 	if err != nil {
 		return err
@@ -297,12 +301,26 @@ func (s *service) UpdateKYCStatus(ctx context.Context, id uint, status string, r
 		return err
 	}
 
-	if status == "approved" {
+	if status == "verified" {
 		userID := kyc.UserID
 
 		_ = s.cashWalletService.CreateWallet(ctx, userID)
 		_ = s.ecardService.CreateCard(ctx, userID)
-	}
 
+		var user auth.User
+
+		if err := s.repo.FindUserById(
+			ctx,
+			&user,
+			"id = ?",
+			userID,
+		); err != nil {
+			return err
+		}
+
+		if err := s.repo.UpdateUser(ctx, &user, "id = ?", true, "kyc_status", user.ID); err != nil {
+			return err
+		}
+	}
 	return nil
 }
