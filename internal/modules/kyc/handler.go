@@ -45,7 +45,7 @@ func (h *Handler) SubmitKYC(c *fiber.Ctx) error {
 	if err != nil {
 		return utils.Error(c, 400, "selfie is required", err.Error())
 	}
-
+	
 	// assign to DTO
 	req.AadhaarFront = aadhaarFront
 	req.AadhaarBack = aadhaarBack
@@ -53,7 +53,6 @@ func (h *Handler) SubmitKYC(c *fiber.Ctx) error {
 	req.Selfie = selfie
 
 	userID := c.Locals("userID").(uint)
-
 	err = h.service.SubmitKYC(c.UserContext(), userID, &req)
 	if err != nil {
 		return utils.Error(c, 500, "KYC submission failed", err.Error())
