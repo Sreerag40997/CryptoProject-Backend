@@ -301,7 +301,7 @@ func (s *service) UpdateKYCStatus(
 		return err
 	}
 
-	if status == "verified" {
+	if status == "approved" {
 		userID := kyc.UserID
 
 		_ = s.cashWalletService.CreateWallet(ctx, userID)

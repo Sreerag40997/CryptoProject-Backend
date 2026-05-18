@@ -73,6 +73,7 @@ func (r *repo) GetWallet(ctx context.Context, userID uint, assetID uint) (*Crypt
 	var wallet CryptoWallet
 
 	err := r.db.WithContext(ctx).
+		Preload("Asset").
 		Where("user_id = ? AND asset_id = ?", userID, assetID).
 		First(&wallet).Error
 
@@ -85,6 +86,7 @@ func (r *repo) GetWalletBySymbol(ctx context.Context, userID uint, symbol string
 	var wallet CryptoWallet
 
 	err := r.db.WithContext(ctx).
+		Preload("Asset").
 		Joins("JOIN crypto_assets ON crypto_assets.id = crypto_wallets.asset_id").
 		Where("crypto_wallets.user_id = ? AND crypto_assets.symbol = ?", userID, symbol).
 		First(&wallet).Error
@@ -97,6 +99,7 @@ func (r *repo) GetAllWallets(ctx context.Context, userID uint) ([]CryptoWallet, 
 	var wallets []CryptoWallet
 
 	err := r.db.WithContext(ctx).
+		Preload("Asset").
 		Where("user_id = ?", userID).
 		Find(&wallets).Error
 
@@ -348,6 +351,7 @@ func (r *repo) GetTransactions(ctx context.Context, userID uint, assetID *uint, 
 	var txns []CryptoWalletTransaction
 
 	query := r.db.WithContext(ctx).
+		Preload("Asset").
 		Where("user_id = ?", userID).
 		Order("id DESC").
 		Limit(limit).
@@ -366,6 +370,7 @@ func (r *repo) GetAllTransactions(ctx context.Context, limit, offset int) ([]Cry
 	var txns []CryptoWalletTransaction
 
 	err := r.db.WithContext(ctx).
+		Preload("Asset").
 		Order("id DESC").
 		Limit(limit).
 		Offset(offset).

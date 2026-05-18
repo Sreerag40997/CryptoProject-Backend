@@ -36,6 +36,7 @@ type CryptoWalletTransaction struct {
 
 	UserID  uint `gorm:"index"`
 	AssetID uint `gorm:"index"`
+	Asset   CryptoAsset `gorm:"foreignKey:AssetID"`
 
 	TxnID string `gorm:"uniqueIndex"`
 

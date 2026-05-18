@@ -125,7 +125,10 @@ func (e *Executor) updateWallets(
 	price int64,
 ) error {
 
-	amount := qty * price
+	amount := (qty * price) / 100000000
+	if amount <= 0 {
+		amount = 1
+	}
 
 	// buyer
 	if err := e.wallet.DebitINR(ctx, buy.UserID, amount); err != nil {
