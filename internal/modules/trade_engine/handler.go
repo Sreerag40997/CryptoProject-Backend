@@ -1,6 +1,7 @@
 package tradeengine
 
 import (
+	"cryptox/packages/utils"
 	"strconv"
 
 	"github.com/gofiber/fiber/v2"
@@ -24,17 +25,15 @@ func (h *Handler) PlaceOrder(c *fiber.Ctx) error {
 
 	var body CreateOrderReq
 	if err := c.BodyParser(&body); err != nil {
-		return c.Status(400).JSON(err.Error())
+		return utils.Error(c, 400, "invalid request", err.Error())
 	}
 
 	err := h.service.PlaceOrder(c.UserContext(), userID, body)
 	if err != nil {
-		return c.Status(400).JSON(err.Error())
+		return utils.Error(c, 400, "failed to place order", err.Error())
 	}
 
-	return c.JSON(fiber.Map{
-		"message": "order placed",
-	})
+	return utils.Success(c, 200, "order placed", nil)
 }
 
 /////////////////////////////////////////////////////////
@@ -51,10 +50,10 @@ func (h *Handler) GetMyOrders(c *fiber.Ctx) error {
 
 	data, err := h.service.GetMyOrders(c.UserContext(), userID, status, limit, offset)
 	if err != nil {
-		return c.Status(500).JSON(err.Error())
+		return utils.Error(c, 500, "failed to fetch orders", err.Error())
 	}
 
-	return c.JSON(data)
+	return utils.Success(c, 200, "orders fetched", data)
 }
 
 /////////////////////////////////////////////////////////
@@ -67,10 +66,10 @@ func (h *Handler) GetOrder(c *fiber.Ctx) error {
 
 	data, err := h.service.GetOrderByID(c.UserContext(), userID, uint(id))
 	if err != nil {
-		return c.Status(400).JSON(err.Error())
+		return utils.Error(c, 400, "failed to fetch order", err.Error())
 	}
 
-	return c.JSON(data)
+	return utils.Success(c, 200, "order fetched", data)
 }
 
 /////////////////////////////////////////////////////////
@@ -83,12 +82,10 @@ func (h *Handler) CancelOrder(c *fiber.Ctx) error {
 
 	err := h.service.CancelOrder(c.UserContext(), userID, uint(id))
 	if err != nil {
-		return c.Status(400).JSON(err.Error())
+		return utils.Error(c, 400, "failed to cancel order", err.Error())
 	}
 
-	return c.JSON(fiber.Map{
-		"message": "order cancelled",
-	})
+	return utils.Success(c, 200, "order cancelled", nil)
 }
 
 /////////////////////////////////////////////////////////
@@ -104,10 +101,10 @@ func (h *Handler) GetMyTrades(c *fiber.Ctx) error {
 
 	data, err := h.service.GetMyTrades(c.UserContext(), userID, limit, offset)
 	if err != nil {
-		return c.Status(500).JSON(err.Error())
+		return utils.Error(c, 500, "failed to fetch trades", err.Error())
 	}
 
-	return c.JSON(data)
+	return utils.Success(c, 200, "trades fetched", data)
 }
 
 /////////////////////////////////////////////////////////
@@ -120,10 +117,10 @@ func (h *Handler) GetOrderFills(c *fiber.Ctx) error {
 
 	data, err := h.service.GetOrderFills(c.UserContext(), userID, uint(id))
 	if err != nil {
-		return c.Status(400).JSON(err.Error())
+		return utils.Error(c, 400, "failed to fetch fills", err.Error())
 	}
 
-	return c.JSON(data)
+	return utils.Success(c, 200, "fills fetched", data)
 }
 
 /////////////////////////////////////////////////////////
@@ -136,10 +133,10 @@ func (h *Handler) GetOrderBook(c *fiber.Ctx) error {
 
 	bids, asks, err := h.service.GetOrderBook(c.UserContext(), symbol)
 	if err != nil {
-		return c.Status(500).JSON(err.Error())
+		return utils.Error(c, 500, "failed to get orderbook", err.Error())
 	}
 
-	return c.JSON(fiber.Map{
+	return utils.Success(c, 200, "orderbook fetched", fiber.Map{
 		"bids": bids,
 		"asks": asks,
 	})
@@ -155,10 +152,10 @@ func (h *Handler) GetTradeHistory(c *fiber.Ctx) error {
 
 	data, err := h.service.GetTradeHistory(c.UserContext(), symbol, limit)
 	if err != nil {
-		return c.Status(500).JSON(err.Error())
+		return utils.Error(c, 500, "failed to fetch trade history", err.Error())
 	}
 
-	return c.JSON(data)
+	return utils.Success(c, 200, "trade history fetched", data)
 }
 
 /////////////////////////////////////////////////////////
@@ -174,10 +171,10 @@ func (h *Handler) GetAllOrders(c *fiber.Ctx) error {
 
 	data, err := h.service.GetAllOrders(c.UserContext(), limit, offset)
 	if err != nil {
-		return c.Status(500).JSON(err.Error())
+		return utils.Error(c, 500, "failed to fetch all orders", err.Error())
 	}
 
-	return c.JSON(data)
+	return utils.Success(c, 200, "all orders fetched", data)
 }
 
 /////////////////////////////////////////////////////////
@@ -191,10 +188,10 @@ func (h *Handler) GetAllTrades(c *fiber.Ctx) error {
 
 	data, err := h.service.GetAllTrades(c.UserContext(), limit, offset)
 	if err != nil {
-		return c.Status(500).JSON(err.Error())
+		return utils.Error(c, 500, "failed to fetch all trades", err.Error())
 	}
 
-	return c.JSON(data)
+	return utils.Success(c, 200, "all trades fetched", data)
 }
 
 /////////////////////////////////////////////////////////
@@ -210,10 +207,10 @@ func (h *Handler) GetOrdersByUserAdmin(c *fiber.Ctx) error {
 
 	data, err := h.service.GetOrdersByUserAdmin(c.UserContext(), uint(userID), limit, offset)
 	if err != nil {
-		return c.Status(500).JSON(err.Error())
+		return utils.Error(c, 500, "failed to fetch user orders", err.Error())
 	}
 
-	return c.JSON(data)
+	return utils.Success(c, 200, "user orders fetched", data)
 }
 
 

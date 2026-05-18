@@ -62,6 +62,7 @@ func SetUp(app *fiber.App, db *gorm.DB, rdb *redis.Client, jwtSecret, razorpayKe
 	b := &bot.Bot{
 		Engine: eng,
 		Redis:  rdb,
+		Repo:   tradeRepo,
 	}
 	b.Start()
 

@@ -27,6 +27,7 @@ func RegisterRoutes(app fiber.Router, service Service, jwtSecret string) {
 	)
 
 	admin.Get("/", h.GetAllWalletsAdmin)
+	admin.Get("/transactions", h.GetAllTransactionsAdmin)
 	admin.Get("/:userId", h.GetUserWalletsAdmin)
 	admin.Get("/:userId/transactions", h.GetUserTransactionsAdmin)
 	admin.Get("/:userId/:symbol", h.GetUserWalletBySymbolAdmin)
@@ -36,8 +37,6 @@ func RegisterRoutes(app fiber.Router, service Service, jwtSecret string) {
 
 	admin.Post("/:userId/freeze", h.FreezeWallet)
 	admin.Post("/:userId/unfreeze", h.UnfreezeWallet)
-
-	admin.Get("/transactions", h.GetAllTransactionsAdmin)
 	
 
 	// ASSET ROUTES

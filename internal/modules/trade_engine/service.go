@@ -9,6 +9,7 @@ import (
 	"errors"
 	"fmt"
 	"strconv"
+	"strings"
 
 	"github.com/redis/go-redis/v9"
 )
@@ -265,12 +266,13 @@ func (s *service) GetOrdersByUserAdmin(ctx context.Context, userID uint, limit, 
 
 
 func (s *service) getMarketPrice(ctx context.Context, symbol string) (int64, error) {
-    key := "market:ticker:" + symbol
+	cleanCoin := strings.Split(symbol, "-")[0]
+	key := "market:ticker:" + cleanCoin + "USDT"
 
-    val, err := s.redis.Get(ctx, key).Result()
-    if err != nil {
-        return 0, err
-    }
+	val, err := s.redis.Get(ctx, key).Result()
+	if err != nil {
+		return 0, err
+	}
 
     var ticker market.Ticker
     if err := json.Unmarshal([]byte(val), &ticker); err != nil {
