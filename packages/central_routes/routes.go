@@ -9,6 +9,7 @@ import (
 	"cryptox/internal/modules/market"
 	"cryptox/internal/modules/payment"
 	"cryptox/internal/modules/profile"
+	"cryptox/internal/modules/rbac"
 
 	tradeengine "cryptox/internal/modules/trade_engine"
 	"cryptox/internal/modules/trade_engine/bot"
@@ -76,6 +77,7 @@ func SetUp(app *fiber.App, db *gorm.DB, rdb *redis.Client, jwtSecret, razorpayKe
 	// routes
 	auth.AuthRoutes(api, db, rdb, jwtSecret)
 	profile.ProfileRoutes(api, db, jwtSecret)
+	rbac.RegisterRoutes(api, db, jwtSecret)
 
 	kyc.RegisterRoutes(api, kycService, jwtSecret)
 	ecard.RegisterRoutes(api, ecardService, jwtSecret)
