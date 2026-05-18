@@ -6,6 +6,7 @@ import (
 	cryptowallet "cryptox/internal/modules/crypto_wallet"
 	ecard "cryptox/internal/modules/e_card"
 	"cryptox/internal/modules/kyc"
+	"cryptox/internal/modules/rbac"
 	"cryptox/internal/modules/trade_engine/model"
 	"cryptox/packages/config"
 	"log"
@@ -47,6 +48,9 @@ func NewPostgresConnection(cfg *config.Config)(*gorm.DB,error){
 		&model.Order{},
 		&model.Trade{},
 		&model.OrderFill{},
+		//RBAC
+		&rbac.Role{},
+		&rbac.Permission{},
 	)
 	if err != nil {
 		log.Fatal(err)
