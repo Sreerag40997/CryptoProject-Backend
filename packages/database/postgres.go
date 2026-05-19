@@ -53,7 +53,7 @@ func NewPostgresConnection(cfg *config.Config)(*gorm.DB,error){
 		&rbac.Permission{},
 	)
 	if err != nil {
-		log.Fatal(err)
+			log.Fatal(err)
 	}
 
 	return db,nil
