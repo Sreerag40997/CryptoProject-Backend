@@ -72,7 +72,7 @@ func (r *repo) UpdateUser(ctx context.Context,model interface{}, query string,da
 	return r.db.
 		WithContext(ctx).
 		Model(model).
-		Where(query, args...).
+		Where(query, args).
 		Update(field, data).Error
 }
 func (r *repo) ListPending(ctx context.Context,status string) ([]KYC, error) {

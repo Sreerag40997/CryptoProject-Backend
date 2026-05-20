@@ -1,7 +1,6 @@
 package cryptowallet
 
 import (
-	"cryptox/packages/utils"
 	"strconv"
 
 	"github.com/gofiber/fiber/v2"
@@ -20,16 +19,16 @@ func NewHandler(service Service) *Handler {
 func (h *Handler) CreateWallet(c *fiber.Ctx) error {
 	var body CreateWalletRequest
 	if err := c.BodyParser(&body); err != nil {
-		return utils.Error(c, 400, "invalid request", err.Error())
+		return c.Status(400).JSON(err.Error())
 	}
 
 	userID := c.Locals("userID").(uint)
 
 	if err := h.service.CreateWallet(c.UserContext(), userID, body.Symbol); err != nil {
-		return utils.Error(c, 400, "failed to create wallet", err.Error())
+		return c.Status(400).JSON(err.Error())
 	}
 
-	return utils.Success(c, 200, "wallet created", nil)
+	return c.JSON("wallet created")
 }
 
 func (h *Handler) GetWallets(c *fiber.Ctx) error {
@@ -37,10 +36,10 @@ func (h *Handler) GetWallets(c *fiber.Ctx) error {
 
 	data, err := h.service.GetMyWallets(c.UserContext(), userID)
 	if err != nil {
-		return utils.Error(c, 500, "failed to fetch wallets", err.Error())
+		return c.Status(500).JSON(err.Error())
 	}
 
-	return utils.Success(c, 200, "wallets fetched", data)
+	return c.JSON(data)
 }
 
 func (h *Handler) GetWallet(c *fiber.Ctx) error {
@@ -49,10 +48,10 @@ func (h *Handler) GetWallet(c *fiber.Ctx) error {
 
 	data, err := h.service.GetWallet(c.UserContext(), userID, symbol)
 	if err != nil {
-		return utils.Error(c, 400, "failed to fetch wallet", err.Error())
+		return c.Status(400).JSON(err.Error())
 	}
 
-	return utils.Success(c, 200, "wallet fetched", data)
+	return c.JSON(data)
 }
 
 func (h *Handler) GetSummary(c *fiber.Ctx) error {
@@ -60,10 +59,10 @@ func (h *Handler) GetSummary(c *fiber.Ctx) error {
 
 	total, err := h.service.GetSummary(c.UserContext(), userID)
 	if err != nil {
-		return utils.Error(c, 500, "failed to get summary", err.Error())
+		return c.Status(500).JSON(err.Error())
 	}
 
-	return utils.Success(c, 200, "summary fetched", fiber.Map{"total": total})
+	return c.JSON(fiber.Map{"total": total})
 }
 
 func (h *Handler) GetTransactions(c *fiber.Ctx) error {
@@ -77,10 +76,10 @@ func (h *Handler) GetTransactions(c *fiber.Ctx) error {
 
 	data, err := h.service.GetTransactions(c.UserContext(), userID, symbol, limit, offset)
 	if err != nil {
-		return utils.Error(c, 500, "failed to fetch transactions", err.Error())
+		return c.Status(500).JSON(err.Error())
 	}
 
-	return utils.Success(c, 200, "transactions fetched", data)
+	return c.JSON(data)
 }
 
 func (h *Handler) GetLocks(c *fiber.Ctx) error {
@@ -88,10 +87,10 @@ func (h *Handler) GetLocks(c *fiber.Ctx) error {
 
 	data, err := h.service.GetLocks(c.UserContext(), userID)
 	if err != nil {
-		return utils.Error(c, 500, "failed to fetch locks", err.Error())
+		return c.Status(500).JSON(err.Error())
 	}
 
-	return utils.Success(c, 200, "locks fetched", data)
+	return c.JSON(data)
 }
 
 ///////////////////// admin wallet //////////
@@ -99,9 +98,9 @@ func (h *Handler) GetLocks(c *fiber.Ctx) error {
 func (h *Handler) GetAllWalletsAdmin(c *fiber.Ctx) error {
 	data, err := h.service.GetAllWalletsAdmin(c.UserContext())
 	if err != nil {
-		return utils.Error(c, 500, "failed to get wallets", err.Error())
+		return c.Status(500).JSON(err.Error())
 	}
-	return utils.Success(c, 200, "wallets fetched", data)
+	return c.JSON(data)
 }
 
 func (h *Handler) GetUserWalletsAdmin(c *fiber.Ctx) error {
@@ -109,10 +108,10 @@ func (h *Handler) GetUserWalletsAdmin(c *fiber.Ctx) error {
 
 	data, err := h.service.GetUserWalletsAdmin(c.UserContext(), uint(userID))
 	if err != nil {
-		return utils.Error(c, 500, "failed to get user wallets", err.Error())
+		return c.Status(500).JSON(err.Error())
 	}
 
-	return utils.Success(c, 200, "user wallets fetched", data)
+	return c.JSON(data)
 }
 
 func (h *Handler) GetUserWalletBySymbolAdmin(c *fiber.Ctx) error {
@@ -121,10 +120,10 @@ func (h *Handler) GetUserWalletBySymbolAdmin(c *fiber.Ctx) error {
 
 	data, err := h.service.GetUserWalletBySymbolAdmin(c.UserContext(), uint(userID), symbol)
 	if err != nil {
-		return utils.Error(c, 400, "failed to get wallet", err.Error())
+		return c.Status(400).JSON(err.Error())
 	}
 
-	return utils.Success(c, 200, "wallet fetched", data)
+	return c.JSON(data)
 }
 
 func (h *Handler) AdminCredit(c *fiber.Ctx) error {
@@ -132,15 +131,15 @@ func (h *Handler) AdminCredit(c *fiber.Ctx) error {
 
 	var body AdminAmountRequest
 	if err := c.BodyParser(&body); err != nil {
-		return utils.Error(c, 400, "invalid request", err.Error())
+		return c.Status(400).JSON(err.Error())
 	}
 
 	err := h.service.AdminCredit(c.UserContext(), uint(userID), body.Symbol, body.Amount)
 	if err != nil {
-		return utils.Error(c, 400, "failed to credit", err.Error())
+		return c.Status(400).JSON(err.Error())
 	}
 
-	return utils.Success(c, 200, "credited successfully", nil)
+	return c.JSON("credited")
 }
 
 func (h *Handler) AdminDebit(c *fiber.Ctx) error {
@@ -148,35 +147,35 @@ func (h *Handler) AdminDebit(c *fiber.Ctx) error {
 
 	var body AdminAmountRequest
 	if err := c.BodyParser(&body); err != nil {
-		return utils.Error(c, 400, "invalid request", err.Error())
+		return c.Status(400).JSON(err.Error())
 	}
 
 	err := h.service.AdminDebit(c.UserContext(), uint(userID), body.Symbol, body.Amount)
 	if err != nil {
-		return utils.Error(c, 400, "failed to debit", err.Error())
+		return c.Status(400).JSON(err.Error())
 	}
 
-	return utils.Success(c, 200, "debited successfully", nil)
+	return c.JSON("debited")
 }
 
 func (h *Handler) FreezeWallet(c *fiber.Ctx) error {
 	userID, _ := strconv.Atoi(c.Params("userId"))
 
 	if err := h.service.FreezeWallet(c.UserContext(), uint(userID)); err != nil {
-		return utils.Error(c, 400, "failed to freeze wallet", err.Error())
+		return c.Status(400).JSON(err.Error())
 	}
 
-	return utils.Success(c, 200, "wallet frozen", nil)
+	return c.JSON("wallet frozen")
 }
 
 func (h *Handler) UnfreezeWallet(c *fiber.Ctx) error {
 	userID, _ := strconv.Atoi(c.Params("userId"))
 
 	if err := h.service.UnfreezeWallet(c.UserContext(), uint(userID)); err != nil {
-		return utils.Error(c, 400, "failed to unfreeze wallet", err.Error())
+		return c.Status(400).JSON(err.Error())
 	}
 
-	return utils.Success(c, 200, "wallet active", nil)
+	return c.JSON("wallet active")
 }
 
 func (h *Handler) GetAllTransactionsAdmin(c *fiber.Ctx) error {
@@ -187,10 +186,10 @@ func (h *Handler) GetAllTransactionsAdmin(c *fiber.Ctx) error {
 
 	data, err := h.service.GetAllTransactionsAdmin(c.UserContext(), limit, offset)
 	if err != nil {
-		return utils.Error(c, 500, "failed to fetch all transactions", err.Error())
+		return c.Status(500).JSON(err.Error())
 	}
 
-	return utils.Success(c, 200, "all transactions fetched", data)
+	return c.JSON(data)
 }
 
 func (h *Handler) GetUserTransactionsAdmin(c *fiber.Ctx) error {
@@ -203,10 +202,10 @@ func (h *Handler) GetUserTransactionsAdmin(c *fiber.Ctx) error {
 
 	data, err := h.service.GetUserTransactionsAdmin(c.UserContext(), uint(userID), limit, offset)
 	if err != nil {
-		return utils.Error(c, 500, "failed to fetch user transactions", err.Error())
+		return c.Status(500).JSON(err.Error())
 	}
 
-	return utils.Success(c, 200, "user transactions fetched", data)
+	return c.JSON(data)
 }
 
 ////////////////////asset admin/////////////
@@ -215,24 +214,24 @@ func (h *Handler) CreateAsset(c *fiber.Ctx) error {
 	var body CreateAssetRequest
 
 	if err := c.BodyParser(&body); err != nil {
-		return utils.Error(c, 400, "invalid request", err.Error())
+		return c.Status(400).JSON(err.Error())
 	}
 
 	err := h.service.CreateAsset(c.UserContext(), body.Symbol, body.Name, body.Precision)
 	if err != nil {
-		return utils.Error(c, 400, "failed to create asset", err.Error())
+		return c.Status(400).JSON(err.Error())
 	}
 
-	return utils.Success(c, 200, "asset created", nil)
+	return c.JSON("asset created")
 }
 
 func (h *Handler) GetAssets(c *fiber.Ctx) error {
 	data, err := h.service.GetAssets(c.UserContext())
 	if err != nil {
-		return utils.Error(c, 500, "failed to fetch assets", err.Error())
+		return c.Status(500).JSON(err.Error())
 	}
 
-	return utils.Success(c, 200, "assets fetched", data)
+	return c.JSON(data)
 }
 
 func (h *Handler) UpdateAsset(c *fiber.Ctx) error {
@@ -243,10 +242,10 @@ func (h *Handler) UpdateAsset(c *fiber.Ctx) error {
 
 	err := h.service.UpdateAsset(c.UserContext(), uint(id), body.Name, body.Precision)
 	if err != nil {
-		return utils.Error(c, 400, "failed to update asset", err.Error())
+		return c.Status(400).JSON(err.Error())
 	}
 
-	return utils.Success(c, 200, "asset updated", nil)
+	return c.JSON("updated")
 }
 
 func (h *Handler) UpdateAssetStatus(c *fiber.Ctx) error {
@@ -260,8 +259,8 @@ func (h *Handler) UpdateAssetStatus(c *fiber.Ctx) error {
 
 	err := h.service.UpdateAssetStatus(c.UserContext(), uint(id), body.Status)
 	if err != nil {
-		return utils.Error(c, 400, "failed to update status", err.Error())
+		return c.Status(400).JSON(err.Error())
 	}
 
-	return utils.Success(c, 200, "status updated", nil)
+	return c.JSON("status updated")
 }

@@ -20,7 +20,6 @@ func RegisterRoutes(app fiber.Router,service Service, jwtSecret string) {
 	wallet.Get("/transactions", handler.GetTransactions)
 
 	wallet.Post("/deposit", handler.Deposit)
-	wallet.Post("/verify-deposit", handler.VerifyDeposit)
 	wallet.Post("/withdraw", handler.Withdraw)
 
 	// admin

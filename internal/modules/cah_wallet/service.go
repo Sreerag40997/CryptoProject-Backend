@@ -38,8 +38,6 @@ type Service interface {
 
 	HandleDepositSuccess(ctx context.Context, userID uint, amount int64, paymentID string) error
 	VerifyPayment(orderID, paymentID, signature string) bool
-	VerifyWebhookSignature(body []byte, signature string) bool
-	FetchPaymentAmount(paymentID string) (int64, error)
 }
 
 type service struct {
@@ -355,14 +353,6 @@ func (s *service) HandleDepositSuccess(ctx context.Context, userID uint, amount 
 
 func (s *service) VerifyPayment(orderID, paymentID, signature string) bool {
 	return s.payment.VerifySignature(orderID, paymentID, signature)
-}
-
-func (s *service) VerifyWebhookSignature(body []byte, signature string) bool {
-	return s.payment.VerifyWebhookSignature(body, signature)
-}
-
-func (s *service) FetchPaymentAmount(paymentID string) (int64, error) {
-	return s.payment.FetchPaymentAmount(paymentID)
 }
 
 func (s *service) CreditPlatform(ctx context.Context, amount int64, source string) error {

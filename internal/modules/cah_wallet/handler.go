@@ -124,39 +124,6 @@ func (h *Handler) Deposit(c *fiber.Ctx) error {
 	})
 }
 
-func (h *Handler) VerifyDeposit(c *fiber.Ctx) error {
-	var body struct {
-		PaymentID string `json:"razorpay_payment_id"`
-		OrderID   string `json:"razorpay_order_id"`
-		Signature string `json:"razorpay_signature"`
-	}
-
-	if err := c.BodyParser(&body); err != nil {
-		return utils.Error(c, 400, "invalid request", err.Error())
-	}
-
-	userID := c.Locals("userID").(uint)
-
-	// Verify the frontend signature
-	if !h.service.VerifyPayment(body.OrderID, body.PaymentID, body.Signature) {
-		return utils.Error(c, 400, "invalid signature", nil)
-	}
-
-	// Fetch secure amount directly from Razorpay
-	amount, err := h.service.FetchPaymentAmount(body.PaymentID)
-	if err != nil {
-		return utils.Error(c, 500, "failed to fetch payment amount", err.Error())
-	}
-
-	// Handle the deposit securely
-	err = h.service.HandleDepositSuccess(c.UserContext(), userID, amount, body.PaymentID)
-	if err != nil {
-		return utils.Error(c, 500, "failed to process deposit", err.Error())
-	}
-
-	return utils.Success(c, 200, "deposit verified", nil)
-}
-
 func (h *Handler) Withdraw(c *fiber.Ctx) error {
 
 	var body struct {
@@ -255,14 +222,12 @@ func (h *Handler) RazorpayWebhook(c *fiber.Ctx) error {
 					Amount  int64  `json:"amount"`
 					OrderID string `json:"order_id"`
 					Notes struct {
-						UserID string `json:"user_id"`
+						UserID uint `json:"user_id"`
 					} `json:"notes"`
 				} `json:"entity"`
 			} `json:"payment"`
 		} `json:"payload"`
 	}
-
-	rawBody := c.Body()
 
 	if err := c.BodyParser(&payload); err != nil {
 		return utils.Error(c, 400, "invalid payload", err.Error())
@@ -274,25 +239,21 @@ func (h *Handler) RazorpayWebhook(c *fiber.Ctx) error {
 	}
 
 	paymentID := payload.Payload.Payment.Entity.ID
-	
-	userIDUint64, err := strconv.ParseUint(payload.Payload.Payment.Entity.Notes.UserID, 10, 32)
-	if err != nil {
-		return utils.Error(c, 400, "invalid user id in notes", err.Error())
-	}
-	userID := uint(userIDUint64)
+	orderID := payload.Payload.Payment.Entity.OrderID
+	userID := payload.Payload.Payment.Entity.Notes.UserID
 	amount := payload.Payload.Payment.Entity.Amount
 
 	// get signature
 	signature := c.Get("X-Razorpay-Signature")
 
-	// VERIFY SIGNATURE (webhook uses raw body)
-	if !h.service.VerifyWebhookSignature(rawBody, signature) {
+	// VERIFY SIGNATURE
+	if !h.service.VerifyPayment(orderID, paymentID, signature) {
 		return utils.Error(c, 400, "invalid signature", nil)
 	}
 
 	// CREDIT WALLET
-	err1 := h.service.HandleDepositSuccess(c.UserContext(), userID, amount, paymentID)
-	if err1 != nil {
+	err := h.service.HandleDepositSuccess(c.UserContext(), userID, amount, paymentID)
+	if err != nil {
 		return utils.Error(c, 500, "deposit failed", err.Error())
 	}
 

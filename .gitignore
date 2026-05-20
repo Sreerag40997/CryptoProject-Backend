@@ -1,2 +1,17 @@
 .env
 docker-compose.yml
+
+# macOS
+.DS_Store
+
+# Go binaries
+*.exe
+*.exe~
+main
+
+# Logs
+*.log
+
+# Temporary files
+tmp/
+cmd/server/tmp/

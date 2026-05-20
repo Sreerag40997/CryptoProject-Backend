@@ -7,7 +7,6 @@ import (
 	"encoding/json"
 	"fmt"
 	"strconv"
-	"strings"
 	"time"
 
 	"github.com/redis/go-redis/v9"
@@ -53,8 +52,8 @@ func (b *Bot) Start() {
 					Side:         "buy",
 					Type:         "limit",
 					Price:        price - 50,
-					Quantity:     100000000,
-					RemainingQty: 100000000,
+					Quantity:     1,
+					RemainingQty: 1,
 					Status:       "open",
 				}
 
@@ -70,8 +69,8 @@ func (b *Bot) Start() {
 					Side:         "sell",
 					Type:         "limit",
 					Price:        price + 50,
-					Quantity:     100000000,
-					RemainingQty: 100000000,
+					Quantity:     1,
+					RemainingQty: 1,
 					Status:       "open",
 				}
 
@@ -87,8 +86,7 @@ func (b *Bot) Start() {
 
 func (b *Bot) getMarketPrice(symbol string) int64 {
 
-	cleanCoin := strings.Split(symbol, "-")[0]
-	key := "market:ticker:" + cleanCoin + "USDT"
+	key := "market:ticker:" + symbol
 
 	val, err := b.Redis.Get(context.Background(), key).Result()
 	if err != nil {
@@ -102,10 +100,7 @@ func (b *Bot) getMarketPrice(symbol string) int64 {
 		return 0
 	}
 
-	rawPrice, err := strconv.ParseFloat(ticker.LastPrice, 64)
-	if err != nil {
-		return 0
-	}
+	price, _ := strconv.ParseInt(ticker.LastPrice, 10, 64)
 
-	return int64(rawPrice * 83.50 * 100)
+	return price
 }

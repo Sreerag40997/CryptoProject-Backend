@@ -17,7 +17,7 @@ func RegisterRoutes(app fiber.Router, service Service, jwtSecret string) {
 	kyc.Post("/submit",handler.SubmitKYC)
 	kyc.Get("/status", handler.GetKYCStatus)
 	kyc.Get("/me", handler.GetMyKYC)
-  kyc.Put("/update", handler.UpdateKYC)
+  	kyc.Put("/update", handler.UpdateKYC)
 
   // admin side
 

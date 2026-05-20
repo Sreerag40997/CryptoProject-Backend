@@ -39,7 +39,7 @@ func (r *razorpayService) CreateOrder(amount int64, userID uint) (string, error)
 		"currency": "INR",
 		"receipt":  fmt.Sprintf("cryptox_%d", time.Now().UnixNano()),
 		"notes": map[string]interface{}{
-			"user_id": fmt.Sprint(userID),
+			"user_id": userID,
 			"source":  "cryptox",
 		},
 	}
@@ -61,18 +61,7 @@ func (r *razorpayService) VerifySignature(orderID, paymentID, signature string) 
 
 	expected := hex.EncodeToString(h.Sum(nil))
 
-	return hmac.Equal([]byte(expected), []byte(signature))
-}
-
-func (r *razorpayService) VerifyWebhookSignature(body []byte, signature string) bool {
-	secret := os.Getenv("RAZORPAY_WEBHOOK_SECRET")
-	if secret == "" {
-		secret = r.secret // fallback to API secret
-	}
-	mac := hmac.New(sha256.New, []byte(secret))
-	mac.Write(body)
-	expected := hex.EncodeToString(mac.Sum(nil))
-	return hmac.Equal([]byte(expected), []byte(signature))
+	return expected == signature
 }
 
 func (r *razorpayService) CreatePayout(userID uint, amount int64, name, ifsc, account string) (string, error) {
@@ -125,16 +114,4 @@ func (r *razorpayService) CreatePayout(userID uint, amount int64, name, ifsc, ac
 	json.Unmarshal(body, &result)
 
 	return result["id"].(string), nil
-} 
-
-func (r *razorpayService) FetchPaymentAmount(paymentID string) (int64, error) {
-	payment, err := r.client.Payment.Fetch(paymentID, nil, nil)
-	if err != nil {
-		return 0, err
-	}
-	amountFloat, ok := payment["amount"].(float64)
-	if !ok {
-		return 0, fmt.Errorf("invalid amount format")
-	}
-	return int64(amountFloat), nil
 }

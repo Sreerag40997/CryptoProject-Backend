@@ -27,42 +27,41 @@ func NewAuthService(repo Repository, redis *redis.Client, jwtSecret string) *Aut
 
 // Register func 
 func (s *AuthService) Register(req *UserRegisterRequest) (interface{}, error) {
+	
+	var existing User
+	err := s.repo.FindOne(&existing, "email = ?", req.Email)
+	if err == nil {
+		return nil, err
+	}
 
-    var existing User
-    err := s.repo.FindOne(&existing, "email = ?", req.Email)
+	// Unexpected DB Error
+	if !errors.Is(err, gorm.ErrRecordNotFound) {
+		return nil, err
+	}
 
-    if err == nil {
-        return nil, errors.New("email already registered")
-    }
+	if req.Password != req.ConformPassword {
+		return  nil, errors.New("password miss match")
+	}
+	
+	hashed, err := utils.Hashing(req.Password)
+	if err != nil {
+		return nil, err
+	}
 
-    if !errors.Is(err, gorm.ErrRecordNotFound) {
-        return nil, errors.New("database error")
-    }
+	user := &User{
+		Name: req.Name,
+		Email: req.Email,
+		Password: hashed,
+	}
 
-    if req.Password != req.ConformPassword {
-        return nil, errors.New("password mismatch")
-    }
+	err = s.repo.Create(user)
 
-    hashed, err := utils.Hashing(req.Password)
-    if err != nil {
-        return nil, err
-    }
+	userResponse := &UserRegisterResponse{
+		Name: user.Name,
+		Email: user.Email,
+	}
 
-    user := &User{
-        Name:     req.Name,
-        Email:    req.Email,
-        Password: hashed,
-				IsVerified: true,
-    }
-
-    if err = s.repo.Create(user); err != nil {
-        return nil, err
-    }
-
-    return &UserRegisterResponse{
-        Name:  user.Name,
-        Email: user.Email,
-    }, nil
+	return userResponse, err
 }
 
 // Login Func
